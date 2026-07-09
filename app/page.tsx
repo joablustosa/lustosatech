@@ -8,8 +8,25 @@ import {
   Image as ImageIcon,
   ArrowRight,
 } from "lucide-react";
+import { prisma } from "@/lib/db";
+import { getSetting } from "@/lib/settings";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [companyName, conversationCount, meetingCount, docCount, openSlots] =
+    await Promise.all([
+      getSetting("companyName"),
+      prisma.conversation.count(),
+      prisma.meeting.count({ where: { status: "confirmado" } }),
+      prisma.document.count({ where: { enabled: true } }),
+      prisma.availabilitySlot.count({
+        where: { isBooked: false, startsAt: { gte: new Date() } },
+      }),
+    ]);
+
+  const brand = companyName || "Lustosa Tech";
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
       <header className="flex items-center justify-between">
@@ -17,7 +34,7 @@ export default function Home() {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
             <MessageCircle size={20} />
           </span>
-          ZapVenda
+          {brand}
         </div>
         <Link href="/admin/login" className="btn-outline">
           Entrar no painel
@@ -29,12 +46,12 @@ export default function Home() {
           <Sparkles size={15} /> Atendimento com IA no WhatsApp
         </div>
         <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-          Responda qualquer dúvida sobre sua empresa e{" "}
-          <span className="text-brand-600">agende reuniões</span> no automático
+          {brand} responde qualquer dúvida e{" "}
+          <span className="text-brand-600">agenda reuniões</span> no automático
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg muted">
-          Sua IA entende texto, áudio e imagens, responde com base nos seus
-          documentos, marca reuniões e ainda entrega um relatório completo da
+          Nossa IA entende texto, áudio e imagens, responde com base nos
+          documentos da empresa, marca reuniões e entrega relatório completo da
           conversa para você fechar a venda.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -42,21 +59,37 @@ export default function Home() {
             Acessar painel <ArrowRight size={18} />
           </Link>
           <Link href="/agendar" className="btn-outline px-6 py-3 text-base">
-            Ver página de agendamento
+            Agendar reunião
+            {openSlots > 0 && (
+              <span className="ml-1.5 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/50 dark:text-brand-300">
+                {openSlots} horários
+              </span>
+            )}
           </Link>
         </div>
       </section>
 
-      <section className="mt-20 grid gap-5 sm:grid-cols-3">
+      <section className="mt-12 grid gap-4 sm:grid-cols-4">
+        <Stat label="Conversas" value={conversationCount} />
+        <Stat label="Reuniões" value={meetingCount} />
+        <Stat label="Documentos" value={docCount} />
+        <Stat label="Horários livres" value={openSlots} />
+      </section>
+
+      <section className="mt-12 grid gap-5 sm:grid-cols-3">
         <Feature
           icon={<FileText size={22} />}
           title="Documentos .md"
-          desc="Importe tudo sobre a empresa e a IA passa a responder com base nesse conhecimento."
+          desc={`${docCount} documento(s) ativo(s) alimentam as respostas da IA sobre a ${brand}.`}
         />
         <Feature
           icon={<CalendarCheck size={22} />}
           title="Agendamento"
-          desc="A IA identifica interesse e envia o link para o cliente marcar uma reunião."
+          desc={
+            openSlots > 0
+              ? `${openSlots} horário(s) disponível(is) para reunião agora.`
+              : "A IA identifica interesse e envia o link para o cliente marcar uma reunião."
+          }
         />
         <Feature
           icon={<Sparkles size={22} />}
@@ -79,9 +112,18 @@ export default function Home() {
       </section>
 
       <footer className="mt-24 text-center text-sm muted">
-        ZapVenda · Automação de atendimento e vendas por WhatsApp
+        {brand} · Automação de atendimento e vendas por WhatsApp
       </footer>
     </main>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="card p-4 text-center">
+      <p className="text-2xl font-bold text-brand-600">{value}</p>
+      <p className="text-xs muted">{label}</p>
+    </div>
   );
 }
 

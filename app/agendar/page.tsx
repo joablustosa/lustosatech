@@ -16,8 +16,14 @@ interface Slot {
   endsAt: string;
 }
 
+interface PublicInfo {
+  companyName: string;
+  openSlots: number;
+}
+
 export default function AgendarPage() {
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [companyName, setCompanyName] = useState("Lustosa Tech");
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Slot | null>(null);
   const [name, setName] = useState("");
@@ -30,8 +36,15 @@ export default function AgendarPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/availability/public");
-    if (res.ok) setSlots(await res.json());
+    const [slotsRes, infoRes] = await Promise.all([
+      fetch("/api/availability/public"),
+      fetch("/api/public/info"),
+    ]);
+    if (slotsRes.ok) setSlots(await slotsRes.json());
+    if (infoRes.ok) {
+      const info = (await infoRes.json()) as PublicInfo;
+      setCompanyName(info.companyName);
+    }
     setLoading(false);
   }
 
@@ -104,7 +117,7 @@ export default function AgendarPage() {
         </span>
         <h1 className="text-2xl font-bold">Agende sua reunião</h1>
         <p className="mt-1 muted">
-          Escolha o melhor horário para conversarmos
+          Escolha o melhor horário para conversar com a equipe da {companyName}
         </p>
       </header>
 

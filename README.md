@@ -8,7 +8,7 @@ reuniões** e gera um **relatório da conversa** para você fechar a venda.
 
 - **Next.js 15** (App Router) + TypeScript — front e back no mesmo app
 - **Tailwind CSS** — interface bonita, responsiva, com modo escuro
-- **Prisma + SQLite** — banco local, zero configuração
+- **Prisma + MySQL** — banco relacional (Azure Database for MySQL em produção)
 - **Auth.js (NextAuth v5)** — login do backoffice
 - **OpenAI** — GPT-4o (conversa + visão) e Whisper (áudio)
 - **WhatsApp Cloud API** (Meta) — API oficial
@@ -29,26 +29,29 @@ reuniões** e gera um **relatório da conversa** para você fechar a venda.
 ## Como rodar (desenvolvimento)
 
 ```bash
-# 1. Instalar dependências
+# 1. Subir MySQL local (Docker)
+docker compose up -d
+
+# 2. Instalar dependências
 npm install
 
-# 2. Configurar variáveis de ambiente
+# 3. Configurar variáveis de ambiente
 cp .env.example .env
-#   edite o .env se quiser (o AUTH_SECRET já vem preenchido no .env gerado)
+#   edite o .env se quiser
 
-# 3. Criar o banco e popular dados de exemplo
-npx prisma db push
-npx prisma db seed
+# 4. Aplicar migrations e popular dados iniciais
+npm run db:migrate
+npm run db:seed
 
-# 4. Subir o servidor
+# 5. Subir o servidor
 npm run dev
 ```
 
 Acesse http://localhost:3000
 
-**Login inicial** (definido no `.env` / seed):
-- Email: `admin@empresa.com`
-- Senha: `admin123`
+**Login inicial** (criado automaticamente pelo seed):
+- Email: `joab@lustosa.tech`
+- Senha: `0bgmtfs0`
 
 ## Configuração da IA
 
@@ -92,14 +95,30 @@ Cliente (WhatsApp) → Webhook → entende mídia (Whisper/GPT-4o Vision)
    → salva tudo para o relatório de vendas
 ```
 
+## Deploy no Azure App Service
+
+1. Crie um **Azure Database for MySQL** e anote a connection string.
+2. No App Service, configure as variáveis:
+   - `DATABASE_URL` — ex.: `mysql://user:pass@host.mysql.database.azure.com:3306/zapvenda?sslaccept=strict`
+   - `AUTH_SECRET`
+   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` (opcional)
+   - `NEXT_PUBLIC_BASE_URL` — URL do App Service
+   - `WHATSAPP_*`, `OPENAI_API_KEY` conforme necessário
+3. Startup command: `npm run start` (roda migrations + seed + Next.js).
+4. No GitHub, adicione os secrets:
+   - `AZURE_WEBAPP_PUBLISH_PROFILE` (baixe no portal Azure → Deployment Center)
+   - `DATABASE_URL`, `AUTH_SECRET`
+5. Push na branch `main` dispara o deploy via GitHub Actions.
+
 ## Scripts
 
 | Comando | Ação |
 |---------|------|
 | `npm run dev` | Servidor de desenvolvimento |
 | `npm run build` | Build de produção |
-| `npm start` | Servidor de produção |
-| `npx prisma db seed` | Popular banco (admin, documento e horários de exemplo) |
+| `npm start` | Migrations + seed + servidor de produção |
+| `npm run db:migrate` | Aplica migrations pendentes |
+| `npm run db:seed` | Popular banco (admin, documentos, horários) |
 | `npx prisma studio` | Explorar o banco visualmente |
 
 ## Evoluções possíveis (fora do escopo atual)

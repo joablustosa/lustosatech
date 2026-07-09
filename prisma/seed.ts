@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL || "admin@empresa.com";
-  const password = process.env.ADMIN_PASSWORD || "admin123";
-  const name = process.env.ADMIN_NAME || "Administrador";
+  const email = process.env.ADMIN_EMAIL || "joab@lustosa.tech";
+  const password = process.env.ADMIN_PASSWORD || "0bgmtfs0";
+  const name = process.env.ADMIN_NAME || "Joab";
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -59,11 +59,14 @@ Para falar com um especialista, agende uma reunião pelo nosso link.`,
       "Use apenas as informações dos documentos da empresa. Quando o cliente " +
       "demonstrar interesse em contratar, conhecer melhor ou tirar dúvidas " +
       "aprofundadas, ofereça agendar uma reunião.",
+    bookingBaseUrl:
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      "https://lustosawhatsapp-cfaedzbtg9fubadx.canadacentral-01.azurewebsites.net",
   };
   for (const [key, value] of Object.entries(defaults)) {
     await prisma.setting.upsert({
       where: { key },
-      update: {},
+      update: key === "bookingBaseUrl" ? {} : {},
       create: { key, value },
     });
   }
