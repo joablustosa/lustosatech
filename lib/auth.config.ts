@@ -5,6 +5,8 @@ import type { NextAuthConfig } from "next-auth";
  * sem dependências de Node (Prisma/bcrypt ficam no auth.ts).
  */
 export const authConfig = {
+  // Confia no host do proxy (Azure App Service) sem depender de AUTH_TRUST_HOST.
+  trustHost: true,
   pages: {
     signIn: "/admin/login",
   },
