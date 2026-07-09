@@ -12,16 +12,21 @@ function run(cmd, { fatal = true } = {}) {
 
 const port = process.env.PORT || "3000";
 
-try {
-  // Etapa crítica: aplica as migrations no banco (o app não funciona sem o schema).
-  run("npx prisma migrate deploy");
+// Chamamos os binarios via "node <caminho>" em vez de "npx" porque, no deploy
+// do Azure App Service Linux, os atalhos em node_modules/.bin podem perder a
+// permissao de execucao (erro "prisma: Permission denied").
+const prisma = "node node_modules/prisma/build/index.js";
+const next = "node node_modules/next/dist/bin/next";
 
-  // Opcional: cria admin/dados iniciais. Não bloqueia a subida do site se falhar
-  // (ex.: versão de Node sem --experimental-strip-types). Use Node 22 LTS no runtime.
+try {
+  // Etapa critica: aplica as migrations (o app nao funciona sem o schema).
+  run(`${prisma} migrate deploy`);
+
+  // Opcional: cria admin/dados iniciais. Nao bloqueia a subida do site se falhar.
   run("node --experimental-strip-types prisma/seed.ts", { fatal: false });
 
-  // Sobe o Next.js na porta que o Azure define via variável PORT.
-  run(`npx next start -p ${port}`);
+  // Sobe o Next.js na porta que o Azure define via variavel PORT.
+  run(`${next} start -p ${port}`);
 } catch {
   process.exit(1);
 }
