@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft, Newspaper } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { renderMarkdown } from "@/lib/markdown";
+import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
@@ -55,22 +55,7 @@ export default async function ArticlePage({
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#141413] dark:bg-[#191817] dark:text-[#e8e6e1]">
-      <header className="border-b border-black/10 dark:border-white/10">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#141413] text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
-              <Newspaper size={17} />
-            </span>
-            {brand}
-          </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-sm text-black/60 hover:opacity-70 dark:text-white/60"
-          >
-            <ArrowLeft size={15} /> Todas as notícias
-          </Link>
-        </div>
-      </header>
+      <SiteHeader brand={brand} />
 
       <article className="mx-auto max-w-3xl px-6 py-14">
         <div className="mb-2 flex items-center gap-3 text-xs">

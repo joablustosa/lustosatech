@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { Newspaper } from "lucide-react";
+import { Newspaper, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { NewsPortal, PortalNews } from "@/components/news-portal";
+import { SiteHeader } from "@/components/site-header";
+import { PRODUCTS } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
@@ -32,33 +34,8 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#141413] dark:bg-[#191817] dark:text-[#e8e6e1]">
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-black/10 bg-[#faf9f5]/85 backdrop-blur dark:border-white/10 dark:bg-[#191817]/85">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#141413] text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
-              <Newspaper size={17} />
-            </span>
-            {brand}
-          </Link>
-          <nav className="flex items-center gap-5 text-sm font-medium">
-            <Link href="/" className="hidden hover:opacity-70 sm:inline">
-              Notícias
-            </Link>
-            <Link href="/agendar" className="hidden hover:opacity-70 sm:inline">
-              Agendar
-            </Link>
-            <Link
-              href="/admin/login"
-              className="rounded-full bg-[#141413] px-4 py-2 text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
-            >
-              Painel
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader brand={brand} />
 
-      {/* Título */}
       <main className="mx-auto max-w-6xl px-6 pb-24 pt-14">
         <div className="mb-14 flex flex-col justify-between gap-4 border-b border-black/10 pb-10 dark:border-white/10 md:flex-row md:items-end">
           <h1 className="font-serif text-6xl font-bold leading-none tracking-tight sm:text-7xl">
@@ -84,13 +61,47 @@ export default async function Home() {
         ) : (
           <NewsPortal news={items} />
         )}
+
+        {/* ===== Produtos ===== */}
+        <section className="mt-20 border-t border-black/10 pt-14 dark:border-white/10">
+          <div className="mb-6 flex items-end justify-between">
+            <h2 className="font-serif text-3xl font-bold tracking-tight">
+              Produtos
+            </h2>
+            <Link
+              href="/produtos"
+              className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-70"
+            >
+              Ver todos <ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {PRODUCTS.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/produtos/${p.slug}`}
+                className="group rounded-2xl border border-black/10 p-6 transition hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-serif text-2xl font-bold">{p.name}</span>
+                  <ArrowRight
+                    size={18}
+                    className="opacity-40 transition group-hover:translate-x-1 group-hover:opacity-100"
+                  />
+                </div>
+                <p className="mt-2 text-sm text-black/60 dark:text-white/60">
+                  {p.tagline}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-black/10 dark:border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-black/50 dark:text-white/50 sm:flex-row">
           <span>© {new Date().getFullYear()} {brand}</span>
-          <span>Portal de notícias de Inteligência Artificial</span>
+          <span>Portal de notícias e produtos de I.A.</span>
         </div>
       </footer>
     </div>
