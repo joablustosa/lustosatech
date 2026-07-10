@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Newspaper } from "lucide-react";
+import { Newspaper, CalendarCheck } from "lucide-react";
 
 /** Cabeçalho público reutilizável (portal, produtos, artigo). */
 export function SiteHeader({ brand }: { brand: string }) {
@@ -22,14 +22,11 @@ export function SiteHeader({ brand }: { brand: string }) {
           <Link href="/produtos" className="hidden hover:opacity-70 sm:inline">
             Produtos
           </Link>
-          <Link href="/agendar" className="hidden hover:opacity-70 sm:inline">
-            Agendar
-          </Link>
           <Link
-            href="/admin/login"
-            className="rounded-full bg-[#141413] px-4 py-2 text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
+            href="/agendar"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#141413] px-5 py-2 text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
           >
-            Painel
+            <CalendarCheck size={15} /> Agendar reunião
           </Link>
         </nav>
       </div>

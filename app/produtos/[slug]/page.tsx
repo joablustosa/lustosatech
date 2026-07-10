@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Sparkles, ArrowRight, Check } from "lucide-react";
 import { getSetting } from "@/lib/settings";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { getProduct } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -112,14 +113,7 @@ export default async function ProductPage({
         </div>
       </section>
 
-      <footer className="border-t border-black/10 dark:border-white/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-sm text-black/50 dark:text-white/50">
-          <Link href="/" className="hover:opacity-70">
-            ← Voltar ao portal
-          </Link>
-          <span>© {new Date().getFullYear()} {brand}</span>
-        </div>
-      </footer>
+      <SiteFooter brand={brand} />
     </div>
   );
 }

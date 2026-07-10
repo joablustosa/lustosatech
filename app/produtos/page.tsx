@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import { getSetting } from "@/lib/settings";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { PRODUCTS } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,8 @@ export default async function ProdutosPage() {
           ))}
         </div>
       </main>
+
+      <SiteFooter brand={brand} />
     </div>
   );
 }

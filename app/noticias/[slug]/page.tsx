@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { renderMarkdown } from "@/lib/markdown";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,8 @@ export default async function ArticlePage({
           </div>
         )}
       </article>
+
+      <SiteFooter brand={brand} />
     </div>
   );
 }

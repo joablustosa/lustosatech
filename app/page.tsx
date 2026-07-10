@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { NewsPortal, PortalNews } from "@/components/news-portal";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { PRODUCTS } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -98,12 +99,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-black/10 dark:border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-black/50 dark:text-white/50 sm:flex-row">
-          <span>© {new Date().getFullYear()} {brand}</span>
-          <span>Portal de notícias e produtos de I.A.</span>
-        </div>
-      </footer>
+      <SiteFooter brand={brand} />
     </div>
   );
 }
