@@ -31,13 +31,19 @@ try {
   // Cria admin/dados iniciais (agora com o client disponivel). Nao bloqueia o boot.
   run("node --experimental-strip-types prisma/seed.ts", { fatal: false });
 
-  // No Azure o build do Next (.next) as vezes nao chega no servidor.
-  // Se estiver ausente, geramos aqui (self-healing).
+  // SEMPRE reconstroi o .next no boot. No Azure o .next antigo persiste em
+  // /home entre deploys, entao o app acabava servindo o build DESATUALIZADO
+  // (mudancas de codigo nao apareciam). Reconstruir garante que o site reflita
+  // o codigo recem-deployado. Se ja houver um build e o rebuild falhar,
+  // mantemos o antigo (nao derruba o site).
   // Requer WEBSITES_CONTAINER_START_TIME_LIMIT alto (ex.: 1800) para dar tempo.
-  if (!existsSync(".next/BUILD_ID")) {
-    console.log(".next ausente — rodando next build...");
-    run(`${next} build`);
-  }
+  const hadBuild = existsSync(".next/BUILD_ID");
+  console.log(
+    hadBuild
+      ? "Reconstruindo .next (garante codigo atualizado)..."
+      : ".next ausente — rodando next build..."
+  );
+  run(`${next} build`, { fatal: !hadBuild });
 
   // Sobe o Next.js na porta que o Azure define via variavel PORT.
   run(`${next} start -p ${port}`);
