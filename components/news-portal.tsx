@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
+import { Search } from "lucide-react";
 
 export interface PortalNews {
   id: string;
@@ -16,109 +16,139 @@ export interface PortalNews {
   featured: boolean;
 }
 
+const MONTHS = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
+
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export function NewsPortal({ news }: { news: PortalNews[] }) {
-  const [active, setActive] = useState("Todos");
+  const [query, setQuery] = useState("");
 
-  const categories = useMemo(() => {
-    const set = new Set(news.map((n) => n.category));
-    return ["Todos", ...Array.from(set)];
-  }, [news]);
+  const featured = news[0];
+  const highlights = news.slice(0, 4);
 
-  const featured = useMemo(
-    () => news.find((n) => n.featured) || news[0],
-    [news]
-  );
-
-  const list = useMemo(() => {
-    const rest = news.filter((n) => n.id !== featured?.id);
-    return active === "Todos"
-      ? rest
-      : rest.filter((n) => n.category === active);
-  }, [news, active, featured]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return news;
+    return news.filter(
+      (n) =>
+        n.title.toLowerCase().includes(q) ||
+        n.category.toLowerCase().includes(q) ||
+        n.excerpt.toLowerCase().includes(q)
+    );
+  }, [news, query]);
 
   return (
     <div>
-      {/* Destaque */}
+      {/* ===== Destaque ===== */}
       {featured && (
-        <Link href={`/noticias/${featured.slug}`} className="group block">
-          <article className="grid gap-6 md:grid-cols-2 md:items-center">
-            <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5">
-              {featured.coverImageUrl && (
+        <section className="grid gap-10 border-b border-black/10 pb-14 dark:border-white/10 md:grid-cols-2 md:items-start">
+          <Link href={`/noticias/${featured.slug}`} className="group block">
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-black/5 dark:bg-white/[0.06]">
+              {featured.coverImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={featured.coverImageUrl}
                   alt=""
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                 />
+              ) : (
+                <div className="flex h-full items-center justify-center p-8 text-center">
+                  <span className="font-serif text-2xl opacity-40">
+                    {featured.title}
+                  </span>
+                </div>
               )}
             </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-brand-600">
-                {featured.category}
-              </span>
-              <h2 className="mt-2 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                {featured.title}
-              </h2>
-              <p className="mt-3 line-clamp-3 text-base muted">
-                {featured.excerpt}
-              </p>
-              <p className="mt-4 text-sm muted">
-                {featured.author ? `${featured.author} · ` : ""}
-                {formatDate(featured.publishedAt)}
-              </p>
-            </div>
-          </article>
-        </Link>
+          </Link>
+
+          <div className="divide-y divide-black/10 dark:divide-white/10">
+            {highlights.map((n) => (
+              <Link
+                key={n.id}
+                href={`/noticias/${n.slug}`}
+                className="group block py-5 first:pt-0"
+              >
+                <div className="mb-1.5 flex items-center gap-3 text-xs">
+                  <span className="font-medium uppercase tracking-wide text-black/60 dark:text-white/60">
+                    {n.category}
+                  </span>
+                  <span className="text-black/40 dark:text-white/40">
+                    {shortDate(n.publishedAt)}
+                  </span>
+                </div>
+                <h3 className="font-serif text-xl font-semibold leading-snug tracking-tight group-hover:underline">
+                  {n.title}
+                </h3>
+                <p className="mt-1.5 line-clamp-2 text-sm text-black/60 dark:text-white/60">
+                  {n.excerpt}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Filtro de categorias */}
-      <div className="mt-14 flex flex-wrap gap-2 border-b pb-4 [border-color:var(--border)]">
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setActive(c)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              active === c
-                ? "bg-brand-600 text-white"
-                : "hover:bg-black/5 dark:hover:bg-white/5"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      {list.length === 0 ? (
-        <p className="py-16 text-center text-sm muted">
-          Nenhuma notícia nesta categoria ainda.
-        </p>
-      ) : (
-        <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((n) => (
-            <Link key={n.id} href={`/noticias/${n.slug}`} className="group block">
-              <div className="aspect-[16/10] overflow-hidden rounded-xl bg-black/5 dark:bg-white/5">
-                {n.coverImageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={n.coverImageUrl}
-                    alt=""
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
-                )}
-              </div>
-              <span className="mt-4 block text-xs font-semibold uppercase tracking-wider text-brand-600">
-                {n.category}
-              </span>
-              <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight group-hover:underline">
-                {n.title}
-              </h3>
-              <p className="mt-2 line-clamp-2 text-sm muted">{n.excerpt}</p>
-              <p className="mt-3 text-xs muted">{formatDate(n.publishedAt)}</p>
-            </Link>
-          ))}
+      {/* ===== Lista completa (tabela) ===== */}
+      <section className="mt-14">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <h2 className="font-serif text-3xl font-bold tracking-tight">Notícias</h2>
+          <div className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar"
+              className="w-64 rounded-full border border-black/15 bg-transparent py-2 pl-9 pr-4 text-sm outline-none transition focus:border-black/40 dark:border-white/15 dark:focus:border-white/40"
+            />
+          </div>
         </div>
-      )}
+
+        {/* Cabeçalho da tabela */}
+        <div className="hidden grid-cols-[130px_180px_1fr] gap-4 border-b border-black/15 pb-3 text-xs font-semibold uppercase tracking-wide text-black/50 dark:border-white/15 dark:text-white/50 sm:grid">
+          <span>Data</span>
+          <span>Categoria</span>
+          <span>Título</span>
+        </div>
+
+        {filtered.length === 0 ? (
+          <p className="py-14 text-center text-sm text-black/50 dark:text-white/50">
+            Nenhuma notícia encontrada.
+          </p>
+        ) : (
+          <ul>
+            {filtered.map((n) => (
+              <li
+                key={n.id}
+                className="border-b border-black/10 dark:border-white/10"
+              >
+                <Link
+                  href={`/noticias/${n.slug}`}
+                  className="group grid gap-1 py-5 sm:grid-cols-[130px_180px_1fr] sm:items-baseline sm:gap-4"
+                >
+                  <span className="text-sm text-black/50 dark:text-white/50">
+                    {shortDate(n.publishedAt)}
+                  </span>
+                  <span className="text-sm text-black/60 dark:text-white/60">
+                    {n.category}
+                  </span>
+                  <span className="font-serif text-lg font-medium leading-snug tracking-tight group-hover:underline">
+                    {n.title}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "ZapVenda — Automação de WhatsApp com IA",
+  title: "Notícias de I.A.",
   description:
-    "Atendimento automático no WhatsApp com IA, agendamento de reuniões e relatórios de conversa.",
+    "Portal de notícias, tutoriais e tendências de Inteligência Artificial.",
 };
 
 export default function RootLayout({
@@ -16,7 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${fraunces.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

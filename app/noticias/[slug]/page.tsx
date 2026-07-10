@@ -4,10 +4,17 @@ import type { Metadata } from "next";
 import { ArrowLeft, Newspaper } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
-import { formatDate } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/markdown";
 
 export const dynamic = "force-dynamic";
+
+const MONTHS = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
+function fmt(d: Date): string {
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export async function generateMetadata({
   params,
@@ -47,52 +54,58 @@ export default async function ArticlePage({
     : [];
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b [border-color:var(--border)]">
+    <div className="min-h-screen bg-[#faf9f5] text-[#141413] dark:bg-[#191817] dark:text-[#e8e6e1]">
+      <header className="border-b border-black/10 dark:border-white/10">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">
-              <Newspaper size={18} />
+          <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#141413] text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
+              <Newspaper size={17} />
             </span>
             {brand}
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-sm muted hover:underline"
+            className="inline-flex items-center gap-1 text-sm text-black/60 hover:opacity-70 dark:text-white/60"
           >
             <ArrowLeft size={15} /> Todas as notícias
           </Link>
         </div>
       </header>
 
-      <article className="mx-auto max-w-3xl px-6 py-12">
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-600">
-          {news.category}
-        </span>
-        <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight">
+      <article className="mx-auto max-w-3xl px-6 py-14">
+        <div className="mb-2 flex items-center gap-3 text-xs">
+          <span className="font-medium uppercase tracking-wide text-black/60 dark:text-white/60">
+            {news.category}
+          </span>
+          <span className="text-black/40 dark:text-white/40">
+            {fmt(news.publishedAt)}
+          </span>
+        </div>
+        <h1 className="font-serif text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
           {news.title}
         </h1>
-        <p className="mt-4 text-sm muted">
-          {news.author ? `Por ${news.author} · ` : ""}
-          {formatDate(news.publishedAt)}
-          {news.source && (
-            <>
-              {" · "}
-              {news.sourceUrl ? (
+        <p className="mt-4 text-lg text-black/60 dark:text-white/60">
+          {news.excerpt}
+        </p>
+        {(news.author || news.source) && (
+          <p className="mt-3 text-sm text-black/50 dark:text-white/50">
+            {news.author ? `Por ${news.author}` : ""}
+            {news.author && news.source ? " · " : ""}
+            {news.source &&
+              (news.sourceUrl ? (
                 <a
                   href={news.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-brand-600 hover:underline"
+                  className="underline hover:opacity-70"
                 >
                   {news.source}
                 </a>
               ) : (
                 news.source
-              )}
-            </>
-          )}
-        </p>
+              ))}
+          </p>
+        )}
 
         {news.coverImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -104,11 +117,7 @@ export default async function ArticlePage({
         )}
 
         {news.mediaType === "video" && news.mediaUrl && (
-          <video
-            src={news.mediaUrl}
-            controls
-            className="mt-8 w-full rounded-2xl"
-          />
+          <video src={news.mediaUrl} controls className="mt-8 w-full rounded-2xl" />
         )}
 
         <div
@@ -117,11 +126,11 @@ export default async function ArticlePage({
         />
 
         {tags.length > 0 && (
-          <div className="mt-10 flex flex-wrap gap-2 border-t pt-6 [border-color:var(--border)]">
+          <div className="mt-12 flex flex-wrap gap-2 border-t border-black/10 pt-6 dark:border-white/10">
             {tags.map((t) => (
               <span
                 key={t}
-                className="rounded-full bg-black/5 px-3 py-1 text-xs muted dark:bg-white/10"
+                className="rounded-full bg-black/[0.06] px-3 py-1 text-xs text-black/60 dark:bg-white/10 dark:text-white/60"
               >
                 #{t}
               </span>

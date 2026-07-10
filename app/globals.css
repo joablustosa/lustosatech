@@ -95,8 +95,9 @@
   margin: 0.4rem 0;
 }
 .article-body a {
-  color: #059669;
+  color: inherit;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .article-body code {
   background: rgba(100, 116, 139, 0.15);
