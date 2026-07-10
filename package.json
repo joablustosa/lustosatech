@@ -18,6 +18,7 @@
     "seed": "node --experimental-strip-types prisma/seed.ts"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.33.0",
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
