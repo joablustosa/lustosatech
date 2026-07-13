@@ -112,9 +112,8 @@ export default function AgendarPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <header className="mb-8 text-center">
-        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-white">
-          <MessageCircle size={26} />
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Lustosa Tech" className="mx-auto mb-3 h-16 w-16 object-contain" />
         <h1 className="text-2xl font-bold">Agende sua reunião</h1>
         <p className="mt-1 muted">
           Escolha o melhor horário para conversar com a equipe da {companyName}

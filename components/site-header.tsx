@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Newspaper, CalendarCheck } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 
 /** Cabeçalho público reutilizável (portal, produtos, artigo). */
 export function SiteHeader({ brand }: { brand: string }) {
@@ -8,11 +8,10 @@ export function SiteHeader({ brand }: { brand: string }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-bold tracking-tight"
+          className="flex items-center gap-2.5 text-lg font-bold tracking-tight"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#141413] text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
-            <Newspaper size={17} />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt={brand} className="h-9 w-9 object-contain" />
           {brand}
         </Link>
         <nav className="flex items-center gap-5 text-sm font-medium">

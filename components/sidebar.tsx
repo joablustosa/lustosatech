@@ -32,11 +32,10 @@ export function Sidebar({ userName }: { userName: string }) {
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r bg-[var(--card)] px-4 py-6 [border-color:var(--border)]">
-      <div className="mb-8 flex items-center gap-2 px-2 text-lg font-bold">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
-          <MessageCircle size={19} />
-        </span>
-        ZapVenda
+      <div className="mb-8 flex items-center gap-2.5 px-2 text-lg font-bold">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Lustosa Tech" className="h-9 w-9 object-contain" />
+        Lustosa Tech
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
