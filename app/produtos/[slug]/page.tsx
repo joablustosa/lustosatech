@@ -1,11 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Sparkles, ArrowRight, Check } from "lucide-react";
+import {
+  Sparkles,
+  Check,
+  Code2,
+  Rocket,
+  ShieldCheck,
+  Wallet,
+  RefreshCw,
+  Heart,
+  Terminal,
+  Boxes,
+} from "lucide-react";
 import { getSetting } from "@/lib/settings";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { getProduct } from "@/lib/products";
+import { LeadButton } from "@/components/lead-button";
+import { getProduct, type Highlight, type Platform } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +29,23 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = getProduct(slug);
   if (!product) return { title: "Produto não encontrado" };
-  return { title: product.name, description: product.tagline };
+  return { title: `${product.name} — ${product.tagline}`, description: product.description };
 }
+
+const HIGHLIGHT_ICON: Record<Highlight["icon"], React.ElementType> = {
+  code: Code2,
+  rocket: Rocket,
+  shield: ShieldCheck,
+  wallet: Wallet,
+  refresh: RefreshCw,
+};
+
+const PLATFORM_ICON: Record<Platform["icon"], React.ElementType> = {
+  heart: Heart,
+  terminal: Terminal,
+  boxes: Boxes,
+  code: Code2,
+};
 
 export default async function ProductPage({
   params,
@@ -30,6 +57,7 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const brand = (await getSetting("companyName")) || "Lustosa Tech";
+  const wa = product.whatsapp;
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#141413] dark:bg-[#191817] dark:text-[#e8e6e1]">
@@ -38,19 +66,27 @@ export default async function ProductPage({
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-black/10 dark:border-white/10">
         <div
-          className="pointer-events-none absolute inset-0 opacity-70"
+          className="pointer-events-none absolute inset-0 opacity-80"
           style={{
             background:
-              "radial-gradient(900px 380px at 50% -10%, rgba(16,185,129,0.18), transparent 70%)",
+              "radial-gradient(900px 400px at 50% -10%, rgba(64,90,140,0.20), transparent 70%)",
           }}
         />
-        <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
+        <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
+          {product.logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.logo}
+              alt={product.name}
+              className="mx-auto mb-6 h-20 w-20 object-contain"
+            />
+          )}
           {product.badge && (
-            <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm font-medium text-brand-700 dark:text-brand-300">
+            <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-black/15 px-4 py-1.5 text-sm font-medium text-black/60 dark:border-white/15 dark:text-white/60">
               <Sparkles size={15} /> {product.badge}
             </div>
           )}
-          <p className="font-serif text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">
+          <p className="font-serif text-sm font-semibold uppercase tracking-[0.25em] text-black/50 dark:text-white/50">
             {product.name}
           </p>
           <h1 className="mx-auto mt-3 max-w-3xl font-serif text-5xl font-bold leading-tight tracking-tight sm:text-6xl">
@@ -60,56 +96,175 @@ export default async function ProductPage({
             {product.description}
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href={product.primaryCta.href}
-              className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-base font-medium text-white transition hover:bg-brand-700"
-            >
-              {product.primaryCta.label} <ArrowRight size={18} />
-            </Link>
-            {product.secondaryCta && (
-              <Link
-                href={product.secondaryCta.href}
-                className="inline-flex items-center gap-2 rounded-full border border-black/15 px-6 py-3 text-base font-medium transition hover:border-black/40 dark:border-white/15 dark:hover:border-white/40"
-              >
-                {product.secondaryCta.label}
-              </Link>
-            )}
+            <LeadButton label="Agendar reunião" whatsapp={wa} variant="primary" />
+            <LeadButton label="Saber mais" whatsapp={wa} variant="outline" />
           </div>
         </div>
       </section>
 
-      {/* Recursos */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="mb-10 text-center font-serif text-3xl font-bold tracking-tight">
-          O que a {product.name} faz
-        </h2>
-        <div className="grid gap-5 sm:grid-cols-2">
-          {product.features.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-black/10 p-6 dark:border-white/10"
-            >
-              <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-brand-500/15 text-brand-600 dark:text-brand-300">
-                <Check size={18} />
+      {/* Diferenciais */}
+      <section className="mx-auto max-w-5xl px-6 py-16">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {product.highlights.map((h) => {
+            const Icon = HIGHLIGHT_ICON[h.icon];
+            return (
+              <div
+                key={h.title}
+                className="rounded-2xl border border-black/10 p-6 dark:border-white/10"
+              >
+                <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-black/5 dark:bg-white/10">
+                  <Icon size={18} />
+                </div>
+                <h3 className="font-semibold">{h.title}</h3>
+                <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
+                  {h.desc}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
-                {f.desc}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
+      </section>
 
-        <div className="mt-14 rounded-2xl border border-black/10 bg-black/[0.02] p-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
-          <h3 className="font-serif text-2xl font-bold">
-            Pronto para automatizar seu atendimento?
+      {/* Planos */}
+      <section
+        id="planos"
+        className="border-y border-black/10 bg-black/[0.02] py-20 dark:border-white/10 dark:bg-white/[0.02]"
+      >
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-12 text-center">
+            <h2 className="font-serif text-4xl font-bold tracking-tight">Planos</h2>
+            <p className="mt-3 text-black/60 dark:text-white/60">
+              Escopo e preço fechados no diagnóstico. Sem surpresa no boleto.
+            </p>
+          </div>
+          <div className="grid items-start gap-6 lg:grid-cols-3">
+            {product.plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`flex h-full flex-col rounded-3xl border p-7 ${
+                  plan.highlight
+                    ? "border-[#405a8c] bg-[#faf9f5] shadow-xl ring-1 ring-[#405a8c]/30 dark:bg-[#20242e]"
+                    : "border-black/10 dark:border-white/10"
+                }`}
+              >
+                {plan.highlight && (
+                  <span className="mb-3 w-fit rounded-full bg-[#405a8c] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                    Mais escolhido
+                  </span>
+                )}
+                <h3 className="font-serif text-2xl font-bold">{plan.name}</h3>
+                <p className="mt-3 text-3xl font-bold">{plan.price}</p>
+                <p className="mt-1 text-sm text-black/50 dark:text-white/50">
+                  {plan.deadline}
+                </p>
+                <p className="mt-4 text-sm font-medium text-black/70 dark:text-white/70">
+                  {plan.tagline}
+                </p>
+                <ul className="mt-4 flex-1 space-y-2.5">
+                  {plan.items.map((it) => (
+                    <li key={it} className="flex gap-2.5 text-sm">
+                      <Check
+                        size={17}
+                        className="mt-0.5 shrink-0 text-[#405a8c] dark:text-[#8fb0e6]"
+                      />
+                      <span className="text-black/70 dark:text-white/70">{it}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-7">
+                  <LeadButton
+                    label={`Quero o ${plan.name}`}
+                    whatsapp={wa}
+                    defaultPlan={plan.name}
+                    variant={plan.highlight ? "primary" : "outline"}
+                    fullWidth
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Como funciona */}
+      <section className="mx-auto max-w-4xl px-6 py-20">
+        <h2 className="mb-12 text-center font-serif text-4xl font-bold tracking-tight">
+          Como funciona
+        </h2>
+        <ol className="space-y-6">
+          {product.steps.map((step, i) => (
+            <li key={step.title} className="flex gap-5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#141413] font-serif text-lg font-bold text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
+                {i + 1}
+              </span>
+              <div className="pt-1">
+                <h3 className="text-lg font-bold">{step.title}</h3>
+                <p className="mt-1 text-black/65 dark:text-white/65">{step.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Plataformas */}
+      <section className="border-t border-black/10 py-20 dark:border-white/10">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="mb-10 text-center">
+            <h2 className="font-serif text-4xl font-bold tracking-tight">
+              Você escolhe a plataforma
+            </h2>
+            <p className="mt-3 text-black/60 dark:text-white/60">
+              Construímos na ferramenta que faz mais sentido para o seu projeto.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {product.platforms.map((p) => {
+              const Icon = PLATFORM_ICON[p.icon];
+              return (
+                <div
+                  key={p.name}
+                  className="rounded-2xl border border-black/10 p-6 text-center dark:border-white/10"
+                >
+                  <div
+                    className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl"
+                    style={{ backgroundColor: p.color + "22", color: p.color }}
+                  >
+                    <Icon size={26} />
+                  </div>
+                  <h3 className="font-serif text-xl font-bold">{p.name}</h3>
+                  <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
+                    {p.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Nota de fechamento + CTA final */}
+      <section className="mx-auto max-w-4xl px-6 pb-24">
+        <div className="rounded-3xl border border-black/10 bg-black/[0.02] p-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
+          {product.closingNote && (
+            <p className="mx-auto mb-6 max-w-2xl text-lg text-black/70 dark:text-white/70">
+              {product.closingNote}
+            </p>
+          )}
+          <h3 className="font-serif text-3xl font-bold">
+            Bora tirar seu sistema do papel?
           </h3>
-          <Link
-            href={product.primaryCta.href}
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 font-medium text-white transition hover:bg-brand-700"
-          >
-            {product.primaryCta.label} <ArrowRight size={18} />
-          </Link>
+          <p className="mt-2 text-black/60 dark:text-white/60">
+            Comece pelo diagnóstico — 1h, sem compromisso, com preço fechado ao final.
+          </p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <LeadButton label="Agendar diagnóstico" whatsapp={wa} variant="primary" />
+            <Link
+              href="/produtos"
+              className="inline-flex items-center rounded-full border border-black/20 px-6 py-3 text-base font-medium transition hover:border-black/50 dark:border-white/20 dark:hover:border-white/50"
+            >
+              Ver todos os produtos
+            </Link>
+          </div>
         </div>
       </section>
 
