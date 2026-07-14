@@ -18,7 +18,7 @@ export interface Platform {
   name: string;
   desc: string;
   color: string; // cor de destaque da marca
-  icon: "heart" | "terminal" | "boxes" | "code";
+  logo: string;
 }
 
 export interface Highlight {
@@ -51,7 +51,7 @@ export const PRODUCTS: Product[] = [
     logo: "/logo-lbuild.png",
     whatsapp: "5521976701610",
     description:
-      "Desenvolvemos seu sistema na plataforma que você escolher — Lovable, Replit, Bubble, ou código puro com Claude Code (React, Next.js, Python). Entregamos o projeto instalado e rodando em produção, no seu domínio, com código-fonte 100% seu e 3 meses de suporte incluso após a instalação. Sem aluguel de software, sem dependência da gente, sem surpresa no boleto.",
+      "Desenvolvemos seu sistema na plataforma que você escolher — Lovable, Replit, Cursor, ou código puro com Claude Code (React, Next.js, Python). Entregamos o projeto instalado e rodando em produção, no seu domínio, com código-fonte 100% seu e 3 meses de suporte incluso após a instalação. Sem aluguel de software, sem dependência da gente, sem surpresa no boleto.",
     highlights: [
       {
         icon: "code",
@@ -149,25 +149,25 @@ export const PRODUCTS: Product[] = [
         name: "Lovable",
         desc: "Apps web com IA, rápido e visual.",
         color: "#F2495C",
-        icon: "heart",
+        logo: "/lovable.png",
       },
       {
         name: "Replit",
         desc: "Do protótipo à produção no navegador.",
         color: "#F26207",
-        icon: "terminal",
+        logo: "/replit.png",
       },
       {
-        name: "Bubble",
-        desc: "No-code poderoso pra apps completos.",
-        color: "#1E40FF",
-        icon: "boxes",
+        name: "Cursor",
+        desc: "IA de código no editor — desenvolvimento ágil.",
+        color: "#8A8A8A",
+        logo: "/cursor.png",
       },
       {
         name: "Claude Code",
         desc: "Código puro: React, Next.js, Python — controle total.",
         color: "#D97757",
-        icon: "code",
+        logo: "/claude.png",
       },
     ],
     closingNote:

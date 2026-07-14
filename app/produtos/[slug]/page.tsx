@@ -9,15 +9,12 @@ import {
   ShieldCheck,
   Wallet,
   RefreshCw,
-  Heart,
-  Terminal,
-  Boxes,
 } from "lucide-react";
 import { getSetting } from "@/lib/settings";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LeadButton } from "@/components/lead-button";
-import { getProduct, type Highlight, type Platform } from "@/lib/products";
+import { getProduct, type Highlight } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
@@ -38,13 +35,6 @@ const HIGHLIGHT_ICON: Record<Highlight["icon"], React.ElementType> = {
   shield: ShieldCheck,
   wallet: Wallet,
   refresh: RefreshCw,
-};
-
-const PLATFORM_ICON: Record<Platform["icon"], React.ElementType> = {
-  heart: Heart,
-  terminal: Terminal,
-  boxes: Boxes,
-  code: Code2,
 };
 
 export default async function ProductPage({
@@ -218,26 +208,25 @@ export default async function ProductPage({
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {product.platforms.map((p) => {
-              const Icon = PLATFORM_ICON[p.icon];
-              return (
-                <div
-                  key={p.name}
-                  className="rounded-2xl border border-black/10 p-6 text-center dark:border-white/10"
-                >
-                  <div
-                    className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl"
-                    style={{ backgroundColor: p.color + "22", color: p.color }}
-                  >
-                    <Icon size={26} />
-                  </div>
-                  <h3 className="font-serif text-xl font-bold">{p.name}</h3>
-                  <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
-                    {p.desc}
-                  </p>
+            {product.platforms.map((p) => (
+              <div
+                key={p.name}
+                className="rounded-2xl border border-black/10 p-6 text-center dark:border-white/10"
+              >
+                <div className="mx-auto mb-4 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-black">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.logo}
+                    alt={p.name}
+                    className="h-full w-full object-contain"
+                  />
                 </div>
-              );
-            })}
+                <h3 className="font-serif text-xl font-bold">{p.name}</h3>
+                <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
+                  {p.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
