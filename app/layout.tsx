@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Notícias de I.A.",
   description:
     "Portal de notícias, tutoriais e tendências de Inteligência Artificial.",
+  other: {
+    "facebook-domain-verification": "3hzjo04pgtmllk6wuq7i369xrm0hmj",
+  },
 };
 
 export default function RootLayout({
