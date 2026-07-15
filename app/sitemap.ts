@@ -2,17 +2,31 @@ import type { MetadataRoute } from "next";
 import { PRODUCTS } from "@/lib/products";
 import { prisma } from "@/lib/db";
 
+// Evita pré-render estático no build (CI sem DATABASE_URL).
+export const dynamic = "force-dynamic";
+
 const SITE_URL =
   process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
   "https://lustosatech.com";
 
+async function getPublishedNews() {
+  if (!process.env.DATABASE_URL) return [];
+
+  try {
+    return await prisma.news.findMany({
+      where: { status: "published" },
+      select: { slug: true, updatedAt: true, publishedAt: true },
+      orderBy: { publishedAt: "desc" },
+      take: 500,
+    });
+  } catch {
+    // Build/CI ou DB indisponível: sitemap fica só com rotas estáticas.
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const news = await prisma.news.findMany({
-    where: { status: "published" },
-    select: { slug: true, updatedAt: true, publishedAt: true },
-    orderBy: { publishedAt: "desc" },
-    take: 500,
-  });
+  const news = await getPublishedNews();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
