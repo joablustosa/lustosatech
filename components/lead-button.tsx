@@ -7,21 +7,26 @@ interface Props {
   label: string;
   whatsapp: string; // ex.: 5521976701610
   productName?: string;
+  planOptions?: string[];
   variant?: "primary" | "outline" | "light";
   defaultPlan?: string;
   fullWidth?: boolean;
 }
 
-const PLANS = ["Essencial", "Profissional", "Sob Medida", "Ainda não sei"];
+const DEFAULT_PLANS = ["Essencial", "Profissional", "Sob Medida", "Ainda não sei"];
 
 export function LeadButton({
   label,
   whatsapp,
   productName = "LUSTOSA BUILD",
+  planOptions,
   variant = "primary",
   defaultPlan = "",
   fullWidth,
 }: Props) {
+  const plans = planOptions?.length
+    ? [...planOptions, "Ainda não sei"]
+    : DEFAULT_PLANS;
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [nome, setNome] = useState("");
@@ -122,7 +127,7 @@ export function LeadButton({
                 onChange={(e) => setPlano(e.target.value)}
               >
                 <option value="">Plano de interesse (opcional)</option>
-                {PLANS.map((p) => (
+                {plans.map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>

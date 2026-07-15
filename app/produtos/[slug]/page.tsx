@@ -129,12 +129,14 @@ export default async function ProductPage({
               label="Agendar reunião"
               whatsapp={wa}
               productName={product.name}
+              planOptions={product.plans.map((p) => p.name)}
               variant="primary"
             />
             <LeadButton
               label="Saber mais"
               whatsapp={wa}
               productName={product.name}
+              planOptions={product.plans.map((p) => p.name)}
               variant="outline"
             />
           </div>
@@ -216,6 +218,7 @@ export default async function ProductPage({
                     label={`Quero o ${plan.name}`}
                     whatsapp={wa}
                     productName={product.name}
+                    planOptions={product.plans.map((p) => p.name)}
                     defaultPlan={plan.name}
                     variant={plan.highlight ? "primary" : "outline"}
                     fullWidth
@@ -315,6 +318,7 @@ export default async function ProductPage({
               label="Agendar diagnóstico"
               whatsapp={wa}
               productName={product.name}
+              planOptions={product.plans.map((p) => p.name)}
               variant="primary"
             />
             <Link

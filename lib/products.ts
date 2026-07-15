@@ -335,6 +335,157 @@ export const PRODUCTS: Product[] = [
     closingSubline:
       "Comece pelo diagnóstico — 1h, sem compromisso, com escopo e preço fechados ao final.",
   },
+  {
+    slug: "lustosa-refactor",
+    name: "LUSTOSA REFACTOR",
+    tagline: "Do legado ao digital — sem big bang",
+    badge: "Modernização de sistemas legados",
+    logo: "/logo.png",
+    whatsapp: "5521976701610",
+    description:
+      "Pegamos o sistema legado da sua empresa e levamos para stacks atuais, com web + mobile-first. Delphi, VB, desktop, COBOL, PHP antigo, ERP monolítico — o que for. Usamos modernização incremental (padrão strangler): o negócio continua no ar enquanto migramos módulo a módulo, com risco controlado, testes de paridade e cutover sem apagar a luz. Código novo, experiência atual, operação no seu ritmo.",
+    highlights: [
+      {
+        icon: "shield",
+        title: "Sem big bang",
+        desc: "Migração incremental: legado e novo convivem até o cutover seguro.",
+      },
+      {
+        icon: "rocket",
+        title: "Web + mobile-first",
+        desc: "Interfaces responsivas, PWA ou app — a experiência que o mercado espera.",
+      },
+      {
+        icon: "code",
+        title: "Stack atual",
+        desc: "React, Next.js, APIs modernas, cloud — linguagens e práticas de hoje.",
+      },
+      {
+        icon: "refresh",
+        title: "Valor a cada fatia",
+        desc: "Entrega módulo a módulo: ROI contínuo, sem travar o negócio por anos.",
+      },
+      {
+        icon: "search",
+        title: "Diagnóstico antes de codar",
+        desc: "Mapa de dependências, riscos, dívida técnica e roadmap priorizado.",
+      },
+      {
+        icon: "wallet",
+        title: "Preço por fase",
+        desc: "Modelo do mercado: assessment fixo, fatias sob escopo ou squad mensal.",
+      },
+    ],
+    plansNote:
+      "Precificação usada por consultorias de modernização: diagnóstico fechado, depois entrega por fatia ou engajamento de squad — sem reescrever tudo de uma vez.",
+    plans: [
+      {
+        name: "Diagnóstico",
+        price: "R$ 18.000",
+        deadline: "2–3 semanas",
+        tagline: "Assessment técnico fechado — o padrão do mercado antes de migrar:",
+        items: [
+          "Inventário do legado, dependências e riscos",
+          "Mapa de dívidas técnicas e dados críticos",
+          "Arquitetura alvo (web / mobile-first / APIs)",
+          "Roadmap por fatias (strangler) com esforço e custo estimado",
+          "Documento executivo + apresentação para stakeholders",
+          "Crédito de R$ 5.000 se seguir para Modernização Incremental",
+        ],
+      },
+      {
+        name: "Incremental",
+        price: "a partir de R$ 48.000 / fatia",
+        deadline: "4–10 semanas por módulo",
+        tagline: "Modernização módulo a módulo — o caminho mais seguro do ramo:",
+        highlight: true,
+        items: [
+          "1 fatia de negócio migrada (ex.: login, pedidos, financeiro)",
+          "Camada strangler: legado e novo em paralelo com fallback",
+          "UI web mobile-first + APIs na stack atual",
+          "Migração de dados com testes de paridade",
+          "Cutover gradual, zero downtime planejado",
+          "Código-fonte, docs e handoff da fatia",
+        ],
+      },
+      {
+        name: "Squad",
+        price: "a partir de R$ 38.000 / mês",
+        deadline: "ciclo contínuo (mín. 3 meses)",
+        tagline: "Time dedicado de modernização — modelo squad das big techs de consultoria:",
+        items: [
+          "Squad enxuto (produto + engenharia) focado no legado",
+          "Backlog priorizado: fatias, APIs, mobile-first, dívida técnica",
+          "Releases quinzenais com métricas de progresso da migração",
+          "Operação dual controlada até desligar o legado",
+          "Sustentação do novo e suporte ao cutover",
+          "Escopo e capacidade definidos no kickoff pós-diagnóstico",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Assessment",
+        desc: "Entendemos o legado, os riscos e o que gera mais valor migrar primeiro — com preço e roadmap claros.",
+      },
+      {
+        title: "Arquitetura alvo",
+        desc: "Definimos stack web/mobile-first, APIs, dados e a camada que permite legado e novo coexistirem.",
+      },
+      {
+        title: "Primeira fatia",
+        desc: "Modernizamos um módulo de ponta a ponta, validamos paridade e publicamos em produção com fallback.",
+      },
+      {
+        title: "Migração incremental",
+        desc: "Repetimos fatia a fatia: tráfego migra, o legado encolhe, o negócio não para.",
+      },
+      {
+        title: "Cutover e descomissionamento",
+        desc: "Desligamos o que sobrou do legado, documentamos e transferimos operação para o seu time.",
+      },
+    ],
+    platformsTitle: "Do legado para stacks atuais",
+    platformsSubtitle:
+      "Linguagens e formatos antigos viram web responsiva, mobile-first e APIs modernas — no ritmo da sua operação.",
+    platforms: [
+      {
+        name: "Delphi / VB",
+        desc: "→ Web, PWA e APIs REST/GraphQL.",
+        color: "#ED1C24",
+      },
+      {
+        name: "Desktop / WinForms",
+        desc: "→ Mobile-first e experiência multi-dispositivo.",
+        color: "#0078D4",
+      },
+      {
+        name: "PHP / Java legado",
+        desc: "→ Next.js, Node, .NET ou Python atuais.",
+        color: "#777BB4",
+      },
+      {
+        name: "Monólito / ERP",
+        desc: "→ Módulos, APIs e front moderno por fatia.",
+        color: "#405A8C",
+      },
+      {
+        name: "Mainframe / COBOL",
+        desc: "→ Fachada + serviços novos, cutover gradual.",
+        color: "#1B4F72",
+      },
+      {
+        name: "Mobile nativo antigo",
+        desc: "→ React Native, Flutter ou PWA unificada.",
+        color: "#61DAFB",
+      },
+    ],
+    closingNote:
+      "Não reescrevemos tudo de uma vez. Diagnosticamos, priorizamos e modernizamos por fatias — o mesmo método usado pelas melhores empresas de modernização de legado.",
+    closingHeadline: "Seu legado não precisa travar o futuro.",
+    closingSubline:
+      "Comece pelo Diagnóstico — assessment fechado, roadmap claro e próximo passo com preço definido.",
+  },
 ];
 
 export function getProduct(slug: string): Product | undefined {
