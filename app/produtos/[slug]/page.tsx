@@ -26,7 +26,34 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = getProduct(slug);
   if (!product) return { title: "Produto não encontrado" };
-  return { title: `${product.name} — ${product.tagline}`, description: product.description };
+  const title = `${product.name} — ${product.tagline}`;
+  const images = [
+    product.logo || "/og.png",
+    "/lovable.png",
+    "/replit.png",
+    "/cursor.png",
+    "/claude.png",
+  ];
+  return {
+    title,
+    description: product.description,
+    alternates: { canonical: `/produtos/${product.slug}` },
+    openGraph: {
+      type: "website",
+      locale: "pt_BR",
+      title,
+      description: product.description,
+      url: `/produtos/${product.slug}`,
+      siteName: "Lustosa Tech",
+      images: images.map((url) => ({ url, alt: product.name })),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: product.description,
+      images: [product.logo || "/og.png"],
+    },
+  };
 }
 
 const HIGHLIGHT_ICON: Record<Highlight["icon"], React.ElementType> = {

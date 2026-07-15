@@ -25,13 +25,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const news = await prisma.news.findUnique({ where: { slug } });
   if (!news) return { title: "Notícia não encontrada" };
+  const image = news.coverImageUrl || "/og.png";
   return {
     title: news.title,
     description: news.excerpt,
+    alternates: { canonical: `/noticias/${news.slug}` },
     openGraph: {
+      type: "article",
+      locale: "pt_BR",
       title: news.title,
       description: news.excerpt,
-      images: news.coverImageUrl ? [news.coverImageUrl] : undefined,
+      url: `/noticias/${news.slug}`,
+      siteName: "Lustosa Tech",
+      publishedTime: news.publishedAt?.toISOString(),
+      authors: news.author ? [news.author] : undefined,
+      images: [{ url: image, alt: news.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: news.title,
+      description: news.excerpt,
+      images: [image],
     },
   };
 }

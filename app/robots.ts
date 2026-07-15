@@ -9,8 +9,12 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: "facebookexternalhit", allow: "/" },
       { userAgent: "facebookcatalog", allow: "/" },
       { userAgent: "facebot", allow: "/" },
+      { userAgent: "Twitterbot", allow: "/" },
+      { userAgent: "LinkedInBot", allow: "/" },
+      { userAgent: "Googlebot", allow: "/", disallow: "/admin/" },
       { userAgent: "*", allow: "/", disallow: "/admin/" },
     ],
+    sitemap: "https://lustosatech.com/sitemap.xml",
     host: "https://lustosatech.com",
   };
 }

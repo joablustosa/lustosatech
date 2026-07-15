@@ -9,8 +9,22 @@ import { PRODUCTS } from "@/lib/products";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Produtos",
-  description: "Produtos de Inteligência Artificial da Lustosa Tech.",
+  title: "Produtos de I.A. e Soluções Tech",
+  description:
+    "Produtos de Inteligência Artificial e soluções tech da Lustosa Tech: desenvolvimento sob medida, automação e sistemas em produção.",
+  alternates: { canonical: "/produtos" },
+  openGraph: {
+    title: "Produtos de I.A. e Soluções Tech | Lustosa Tech",
+    description:
+      "Produtos de Inteligência Artificial e soluções tech da Lustosa Tech.",
+    url: "/produtos",
+    images: [{ url: "/og.png", width: 1920, height: 1024, alt: "Lustosa Tech" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Produtos de I.A. e Soluções Tech | Lustosa Tech",
+    images: ["/og.png"],
+  },
 };
 
 export default async function ProdutosPage() {
