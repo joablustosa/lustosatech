@@ -9,6 +9,11 @@ import {
   ShieldCheck,
   Wallet,
   RefreshCw,
+  Search,
+  Megaphone,
+  CalendarClock,
+  Bot,
+  Share2,
 } from "lucide-react";
 import { getSetting } from "@/lib/settings";
 import { SiteHeader } from "@/components/site-header";
@@ -29,11 +34,9 @@ export async function generateMetadata({
   const title = `${product.name} — ${product.tagline}`;
   const images = [
     product.logo || "/og.png",
-    "/lovable.png",
-    "/replit.png",
-    "/cursor.png",
-    "/claude.png",
-  ];
+    ...product.platforms.map((p) => p.logo).filter(Boolean),
+    "/og.png",
+  ].filter((url, i, arr): url is string => Boolean(url) && arr.indexOf(url) === i);
   return {
     title,
     description: product.description,
@@ -62,6 +65,11 @@ const HIGHLIGHT_ICON: Record<Highlight["icon"], React.ElementType> = {
   shield: ShieldCheck,
   wallet: Wallet,
   refresh: RefreshCw,
+  search: Search,
+  megaphone: Megaphone,
+  calendar: CalendarClock,
+  bot: Bot,
+  share: Share2,
 };
 
 export default async function ProductPage({
@@ -75,6 +83,10 @@ export default async function ProductPage({
 
   const brand = (await getSetting("companyName")) || "Lustosa Tech";
   const wa = product.whatsapp;
+  const platformCols =
+    product.platforms.length > 4
+      ? "sm:grid-cols-2 lg:grid-cols-3"
+      : "sm:grid-cols-2 lg:grid-cols-4";
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#141413] dark:bg-[#191817] dark:text-[#e8e6e1]">
@@ -113,8 +125,18 @@ export default async function ProductPage({
             {product.description}
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <LeadButton label="Agendar reunião" whatsapp={wa} variant="primary" />
-            <LeadButton label="Saber mais" whatsapp={wa} variant="outline" />
+            <LeadButton
+              label="Agendar reunião"
+              whatsapp={wa}
+              productName={product.name}
+              variant="primary"
+            />
+            <LeadButton
+              label="Saber mais"
+              whatsapp={wa}
+              productName={product.name}
+              variant="outline"
+            />
           </div>
         </div>
       </section>
@@ -151,7 +173,8 @@ export default async function ProductPage({
           <div className="mb-12 text-center">
             <h2 className="font-serif text-4xl font-bold tracking-tight">Planos</h2>
             <p className="mt-3 text-black/60 dark:text-white/60">
-              Escopo e preço fechados no diagnóstico. Sem surpresa no boleto.
+              {product.plansNote ||
+                "Escopo e preço fechados no diagnóstico. Sem surpresa no boleto."}
             </p>
           </div>
           <div className="grid items-start gap-6 lg:grid-cols-3">
@@ -192,6 +215,7 @@ export default async function ProductPage({
                   <LeadButton
                     label={`Quero o ${plan.name}`}
                     whatsapp={wa}
+                    productName={product.name}
                     defaultPlan={plan.name}
                     variant={plan.highlight ? "primary" : "outline"}
                     fullWidth
@@ -223,30 +247,43 @@ export default async function ProductPage({
         </ol>
       </section>
 
-      {/* Plataformas */}
+      {/* Plataformas / Redes */}
       <section className="border-t border-black/10 py-20 dark:border-white/10">
         <div className="mx-auto max-w-5xl px-6">
           <div className="mb-10 text-center">
             <h2 className="font-serif text-4xl font-bold tracking-tight">
-              Você escolhe a plataforma
+              {product.platformsTitle || "Você escolhe a plataforma"}
             </h2>
             <p className="mt-3 text-black/60 dark:text-white/60">
-              Construímos na ferramenta que faz mais sentido para o seu projeto.
+              {product.platformsSubtitle ||
+                "Construímos na ferramenta que faz mais sentido para o seu projeto."}
             </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={`grid gap-5 ${platformCols}`}>
             {product.platforms.map((p) => (
               <div
                 key={p.name}
                 className="rounded-2xl border border-black/10 p-6 text-center dark:border-white/10"
               >
-                <div className="mx-auto mb-4 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-black">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.logo}
-                    alt={p.name}
-                    className="h-full w-full object-contain"
-                  />
+                <div
+                  className="mx-auto mb-4 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl"
+                  style={{
+                    backgroundColor: p.logo ? "#000" : `${p.color}22`,
+                    color: p.color,
+                  }}
+                >
+                  {p.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.logo}
+                      alt={p.name}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="font-serif text-2xl font-bold">
+                      {p.name.slice(0, 1)}
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-serif text-xl font-bold">{p.name}</h3>
                 <p className="mt-1.5 text-sm text-black/60 dark:text-white/60">
@@ -267,13 +304,19 @@ export default async function ProductPage({
             </p>
           )}
           <h3 className="font-serif text-3xl font-bold">
-            Bora tirar seu sistema do papel?
+            {product.closingHeadline || "Bora tirar seu sistema do papel?"}
           </h3>
           <p className="mt-2 text-black/60 dark:text-white/60">
-            Comece pelo diagnóstico — 1h, sem compromisso, com preço fechado ao final.
+            {product.closingSubline ||
+              "Comece pelo diagnóstico — 1h, sem compromisso, com preço fechado ao final."}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <LeadButton label="Agendar diagnóstico" whatsapp={wa} variant="primary" />
+            <LeadButton
+              label="Agendar diagnóstico"
+              whatsapp={wa}
+              productName={product.name}
+              variant="primary"
+            />
             <Link
               href="/produtos"
               className="inline-flex items-center rounded-full border border-black/20 px-6 py-3 text-base font-medium transition hover:border-black/50 dark:border-white/20 dark:hover:border-white/50"

@@ -6,6 +6,7 @@ import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 interface Props {
   label: string;
   whatsapp: string; // ex.: 5521976701610
+  productName?: string;
   variant?: "primary" | "outline" | "light";
   defaultPlan?: string;
   fullWidth?: boolean;
@@ -16,6 +17,7 @@ const PLANS = ["Essencial", "Profissional", "Sob Medida", "Ainda não sei"];
 export function LeadButton({
   label,
   whatsapp,
+  productName = "LUSTOSA BUILD",
   variant = "primary",
   defaultPlan = "",
   fullWidth,
@@ -45,7 +47,7 @@ export function LeadButton({
     }
     setSending(true);
     const linhas = [
-      "Olá! Vim pelo site da Lustosa Tech e quero falar sobre o *LUSTOSA BUILD*.",
+      `Olá! Vim pelo site da Lustosa Tech e quero falar sobre o *${productName}*.`,
       "",
       `• Nome: ${nome}`,
       `• Contato: ${contato}`,
