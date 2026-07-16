@@ -21,6 +21,9 @@ export function SiteHeader({ brand }: { brand: string }) {
           <Link href="/produtos" className="hidden hover:opacity-70 sm:inline">
             Produtos
           </Link>
+          <Link href="/cases" className="hidden hover:opacity-70 sm:inline">
+            Cases
+          </Link>
           <Link
             href="/agendar"
             className="inline-flex items-center gap-1.5 rounded-full bg-[#141413] px-5 py-2 text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
