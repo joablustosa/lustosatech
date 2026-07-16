@@ -49,6 +49,152 @@ export interface Product {
 
 export const PRODUCTS: Product[] = [
   {
+    slug: "arqia",
+    name: "ARQIA",
+    tagline: "Sua equipe não vai assistir aula sobre IA. Vai construir com IA.",
+    badge: "Programa Corporativo de IA Aplicada",
+    logo: "/logo.png",
+    whatsapp: "5521976701610",
+    description:
+      "O ARQIA é um programa corporativo de 6 semanas em que sua equipe não assiste aula: constrói soluções de IA com os dados e os processos da própria empresa. São 12 encontros ao vivo pelo Microsoft Teams (70% mão na massa), um projeto prático em equipe e um Demo Day com premiação. No fim, a diretoria recebe um relatório executivo com engajamento, evolução medida e o ROI estimado de cada projeto. Atacamos de uma vez as três maiores dores do treinamento corporativo de IA no Brasil: baixo engajamento, dificuldade de medir resultado e falta de orientação depois do curso.",
+    highlights: [
+      {
+        icon: "rocket",
+        title: "70% mão na massa",
+        desc: "No máximo 30% de teoria. O resto é demonstração ao vivo e prática guiada com as ferramentas reais.",
+      },
+      {
+        icon: "megaphone",
+        title: "Competição que engaja",
+        desc: "Demo Day com banca da liderança e premiação — o motor que resolve o baixo engajamento, a dor nº 1 do mercado.",
+      },
+      {
+        icon: "wallet",
+        title: "Resultado que a diretoria vê",
+        desc: "Relatório executivo com presença, evolução medida e ROI estimado por projeto. Fim do treinamento que ninguém sabe se funcionou.",
+      },
+      {
+        icon: "refresh",
+        title: "A vida continua depois",
+        desc: "Plataforma on-demand por 12 meses e mentoria pós-curso — ataca a reclamação de 'sem orientação após o curso'.",
+      },
+      {
+        icon: "bot",
+        title: "Do prompt ao agente",
+        desc: "A equipe sai construindo prompts profissionais e identificando processos da empresa para automatizar com agentes.",
+      },
+      {
+        icon: "shield",
+        title: "Seguro para a empresa",
+        desc: "Uso de IA com dados corporativos dentro das regras: segurança e LGPD desde a primeira aula.",
+      },
+    ],
+    plansNote:
+      "Turmas de até 25 pessoas para preservar a interação. Preço por turma — abaixo do custo de um curso executivo individual de mercado, que passa de R$ 3.000 por pessoa.",
+    plans: [
+      {
+        name: "ARQIA Start",
+        price: "R$ 9.900",
+        deadline: "6 semanas • turma de até 15",
+        tagline: "Para pequenas empresas capacitarem o time em IA com resultado mensurável:",
+        items: [
+          "12 aulas ao vivo pelo Teams (18h) + projeto prático em equipe",
+          "Demo Day com banca e premiação ao 1º, 2º e 3º lugares",
+          "Plataforma on-demand por 12 meses (aulas, prompts e materiais)",
+          "Relatório executivo final com engajamento e evolução medida",
+          "Turma única de até 15 colaboradores (≈ R$ 660/pessoa)",
+          "Canal de dúvidas no Teams durante as 6 semanas",
+        ],
+      },
+      {
+        name: "ARQIA Pro",
+        price: "R$ 19.900",
+        deadline: "6 semanas • turma de até 25",
+        tagline: "Para médias empresas que querem transformar IA em vantagem, não só treinar:",
+        highlight: true,
+        items: [
+          "Tudo do Start, com turma de até 25 colaboradores (≈ R$ 796/pessoa)",
+          "Diagnóstico com a liderança + 100% dos exemplos com dados e casos da sua empresa",
+          "Biblioteca de prompts personalizada por departamento (RH, financeiro, comercial, operações)",
+          "3 meses de mentoria pós-curso levando os projetos vencedores à implementação real",
+          "Workshop executivo de 2h para a diretoria sobre estratégia de IA",
+          "Relatório final expandido com roadmap de implementação",
+        ],
+      },
+      {
+        name: "ARQIA Enterprise",
+        price: "a partir de R$ 39.900",
+        deadline: "múltiplas turmas • sob diagnóstico",
+        tagline: "Para grandes empresas que precisam capacitar muitos times com escala e governança:",
+        items: [
+          "Múltiplas turmas, simultâneas ou em ondas, para dezenas ou centenas de colaboradores",
+          "Tudo do Pro, com customização por área e trilhas por nível de senioridade",
+          "Roadmap de implementação de 6 meses e mentoria estendida dos projetos",
+          "Gestor de conta dedicado, SLA e acompanhamento executivo periódico",
+          "Opção de turmas presenciais e integração com a universidade corporativa",
+          "Escopo, cronograma e preço fechados no diagnóstico",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Diagnóstico e kickoff",
+        desc: "Alinhamos objetivos com a liderança, aplicamos a avaliação diagnóstica e, no Pro/Enterprise, customizamos os exemplos com casos reais da empresa.",
+      },
+      {
+        title: "Fundamentos que importam",
+        desc: "IA generativa na prática, panorama das ferramentas (Claude, ChatGPT, Gemini, Copilot) e uso seguro dos dados da empresa — LGPD.",
+      },
+      {
+        title: "Engenharia de prompt aplicada",
+        desc: "Prompts profissionais, técnicas de contexto e iteração, e uma biblioteca de prompts reutilizáveis por área.",
+      },
+      {
+        title: "IA no fluxo de trabalho",
+        desc: "Documentos, planilhas e apresentações com IA, análise de dados sem programar e automações do dia a dia.",
+      },
+      {
+        title: "Agentes e projeto prático",
+        desc: "O que são agentes, casos por setor e, em equipes de 3 a 5, a construção de uma solução para um problema real — com mentoria ao vivo.",
+      },
+      {
+        title: "Demo Day + relatório executivo",
+        desc: "Cada equipe faz o pitch para a banca; 15 dias depois a diretoria recebe o relatório com métricas, projetos e ROI estimado.",
+      },
+    ],
+    platformsTitle: "Ferramentas que sua equipe vai dominar",
+    platformsSubtitle:
+      "Do primeiro prompt aos agentes — nas plataformas líderes de mercado.",
+    platforms: [
+      {
+        name: "Claude",
+        desc: "Raciocínio, escrita e código com a IA da Anthropic.",
+        color: "#D97757",
+        logo: "/claude.png",
+      },
+      {
+        name: "ChatGPT",
+        desc: "O assistente de IA mais usado do mundo, aplicado ao trabalho.",
+        color: "#10A37F",
+      },
+      {
+        name: "Gemini",
+        desc: "IA do Google integrada a e-mail, documentos e planilhas.",
+        color: "#1A73E8",
+      },
+      {
+        name: "Copilot",
+        desc: "IA da Microsoft dentro do Office e do Teams.",
+        color: "#0078D4",
+      },
+    ],
+    closingNote:
+      "Um programa que resolve as três dores que travam o treinamento de IA nas empresas: engajamento (competição com premiação), medição (relatório executivo com ROI) e continuidade (plataforma on-demand + mentoria).",
+    closingHeadline: "Sua equipe não vai assistir aula sobre IA. Vai construir com IA.",
+    closingSubline:
+      "Comece pelo diagnóstico — 1h com a liderança, sem compromisso, com escopo e proposta ao final.",
+  },
+  {
     slug: "lustosa-build",
     name: "LUSTOSA BUILD",
     tagline: "Seu sistema no ar, do seu jeito",
