@@ -195,8 +195,7 @@ export default async function ProductPage({
                   </span>
                 )}
                 <h3 className="font-serif text-2xl font-bold">{plan.name}</h3>
-                <p className="mt-3 text-3xl font-bold">{plan.price}</p>
-                <p className="mt-1 text-sm text-black/50 dark:text-white/50">
+                <p className="mt-3 text-sm text-black/50 dark:text-white/50">
                   {plan.deadline}
                 </p>
                 <p className="mt-4 text-sm font-medium text-black/70 dark:text-white/70">
@@ -215,7 +214,7 @@ export default async function ProductPage({
                 </ul>
                 <div className="mt-7">
                   <LeadButton
-                    label={`Quero o ${plan.name}`}
+                    label="Falar no WhatsApp"
                     whatsapp={wa}
                     productName={product.name}
                     planOptions={product.plans.map((p) => p.name)}

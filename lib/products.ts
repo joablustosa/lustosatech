@@ -2,7 +2,6 @@
 
 export interface Plan {
   name: string;
-  price: string;
   deadline: string;
   tagline: string;
   items: string[];
@@ -90,11 +89,10 @@ export const PRODUCTS: Product[] = [
       },
     ],
     plansNote:
-      "Turmas de até 25 pessoas para preservar a interação. Preço por turma — abaixo do custo de um curso executivo individual de mercado, que passa de R$ 3.000 por pessoa.",
+      "Turmas de até 25 pessoas para preservar a interação. Escopo e proposta fechados no diagnóstico — fale com a gente no WhatsApp.",
     plans: [
       {
         name: "ARQIA Start",
-        price: "R$ 9.900",
         deadline: "6 semanas • turma de até 15",
         tagline: "Para pequenas empresas capacitarem o time em IA com resultado mensurável:",
         items: [
@@ -102,18 +100,17 @@ export const PRODUCTS: Product[] = [
           "Demo Day com banca e premiação ao 1º, 2º e 3º lugares",
           "Plataforma on-demand por 12 meses (aulas, prompts e materiais)",
           "Relatório executivo final com engajamento e evolução medida",
-          "Turma única de até 15 colaboradores (≈ R$ 660/pessoa)",
+          "Turma única de até 15 colaboradores",
           "Canal de dúvidas no Teams durante as 6 semanas",
         ],
       },
       {
         name: "ARQIA Pro",
-        price: "R$ 19.900",
         deadline: "6 semanas • turma de até 25",
         tagline: "Para médias empresas que querem transformar IA em vantagem, não só treinar:",
         highlight: true,
         items: [
-          "Tudo do Start, com turma de até 25 colaboradores (≈ R$ 796/pessoa)",
+          "Tudo do Start, com turma de até 25 colaboradores",
           "Diagnóstico com a liderança + 100% dos exemplos com dados e casos da sua empresa",
           "Biblioteca de prompts personalizada por departamento (RH, financeiro, comercial, operações)",
           "3 meses de mentoria pós-curso levando os projetos vencedores à implementação real",
@@ -123,7 +120,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "ARQIA Enterprise",
-        price: "a partir de R$ 39.900",
         deadline: "múltiplas turmas • sob diagnóstico",
         tagline: "Para grandes empresas que precisam capacitar muitos times com escala e governança:",
         items: [
@@ -233,7 +229,6 @@ export const PRODUCTS: Product[] = [
     plans: [
       {
         name: "Essencial",
-        price: "R$ 5.000",
         deadline: "entrega em 7–10 dias",
         tagline: "Pra resolver um problema específico do seu negócio:",
         items: [
@@ -246,7 +241,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "Profissional",
-        price: "R$ 10.000",
         deadline: "entrega em 14–21 dias",
         tagline: "Sistema completo pra operação do dia a dia:",
         highlight: true,
@@ -261,7 +255,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "Sob Medida",
-        price: "a partir de R$ 25.000",
         deadline: "prazo definido no diagnóstico",
         tagline: "Pra quem precisa de algo maior:",
         items: [
@@ -292,7 +285,7 @@ export const PRODUCTS: Product[] = [
       },
       {
         title: "Suporte",
-        desc: "3 meses de correções e ajustes inclusos. Depois, sustentação opcional a partir de R$ 500/mês.",
+        desc: "3 meses de correções e ajustes inclusos. Depois, sustentação opcional.",
       },
     ],
     platformsTitle: "Você escolhe a plataforma",
@@ -376,7 +369,6 @@ export const PRODUCTS: Product[] = [
     plans: [
       {
         name: "Essencial",
-        price: "R$ 1.990/mês",
         deadline: "implantação em 7–10 dias",
         tagline: "Para manter presença constante em poucas redes:",
         items: [
@@ -390,7 +382,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "Profissional",
-        price: "R$ 3.990/mês",
         deadline: "implantação em 10–14 dias",
         tagline: "Operação completa de conteúdo com IA:",
         highlight: true,
@@ -405,7 +396,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "Sob Medida",
-        price: "a partir de R$ 7.990/mês",
         deadline: "prazo definido no diagnóstico",
         tagline: "Para marcas e operações que precisam de escala:",
         items: [
@@ -527,7 +517,6 @@ export const PRODUCTS: Product[] = [
     plans: [
       {
         name: "Diagnóstico",
-        price: "R$ 18.000",
         deadline: "2–3 semanas",
         tagline: "Assessment técnico fechado — o padrão do mercado antes de migrar:",
         items: [
@@ -536,12 +525,11 @@ export const PRODUCTS: Product[] = [
           "Arquitetura alvo (web / mobile-first / APIs)",
           "Roadmap por fatias (strangler) com esforço e custo estimado",
           "Documento executivo + apresentação para stakeholders",
-          "Crédito de R$ 5.000 se seguir para Modernização Incremental",
+          "Crédito do diagnóstico abatido se seguir para Modernização Incremental",
         ],
       },
       {
         name: "Incremental",
-        price: "a partir de R$ 48.000 / fatia",
         deadline: "4–10 semanas por módulo",
         tagline: "Modernização módulo a módulo — o caminho mais seguro do ramo:",
         highlight: true,
@@ -556,7 +544,6 @@ export const PRODUCTS: Product[] = [
       },
       {
         name: "Squad",
-        price: "a partir de R$ 38.000 / mês",
         deadline: "ciclo contínuo (mín. 3 meses)",
         tagline: "Time dedicado de modernização — modelo squad das big techs de consultoria:",
         items: [
