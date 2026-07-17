@@ -11,7 +11,7 @@ export function SiteFooter({ brand }: { brand: string }) {
         </span>
         <Link
           href="/admin/login"
-          className="hover:text-black/80 hover:underline dark:hover:text-white/80"
+          className="transition-colors hover:text-accent hover:underline"
         >
           Administração
         </Link>

@@ -75,14 +75,14 @@ export function NewsPortal({ news }: { news: PortalNews[] }) {
                 className="group block py-5 first:pt-0"
               >
                 <div className="mb-1.5 flex items-center gap-3 text-xs">
-                  <span className="font-medium uppercase tracking-wide text-black/60 dark:text-white/60">
+                  <span className="font-semibold uppercase tracking-wide text-accent">
                     {n.category}
                   </span>
                   <span className="text-black/40 dark:text-white/40">
                     {shortDate(n.publishedAt)}
                   </span>
                 </div>
-                <h3 className="font-serif text-xl font-semibold leading-snug tracking-tight group-hover:underline">
+                <h3 className="font-serif text-xl font-semibold leading-snug tracking-tight decoration-accent/60 group-hover:underline">
                   {n.title}
                 </h3>
                 <p className="mt-1.5 line-clamp-2 text-sm text-black/60 dark:text-white/60">
@@ -107,7 +107,7 @@ export function NewsPortal({ news }: { news: PortalNews[] }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar"
-              className="w-64 rounded-full border border-black/15 bg-transparent py-2 pl-9 pr-4 text-sm outline-none transition focus:border-black/40 dark:border-white/15 dark:focus:border-white/40"
+              className="w-64 rounded-full border border-black/15 bg-transparent py-2 pl-9 pr-4 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-white/15"
             />
           </div>
         </div>
@@ -137,10 +137,10 @@ export function NewsPortal({ news }: { news: PortalNews[] }) {
                   <span className="text-sm text-black/50 dark:text-white/50">
                     {shortDate(n.publishedAt)}
                   </span>
-                  <span className="text-sm text-black/60 dark:text-white/60">
+                  <span className="text-sm font-medium text-accent">
                     {n.category}
                   </span>
-                  <span className="font-serif text-lg font-medium leading-snug tracking-tight group-hover:underline">
+                  <span className="font-serif text-lg font-medium leading-snug tracking-tight decoration-accent/60 group-hover:underline">
                     {n.title}
                   </span>
                 </Link>

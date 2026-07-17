@@ -98,7 +98,7 @@ export default async function ProductPage({
           className="pointer-events-none absolute inset-0 opacity-80"
           style={{
             background:
-              "radial-gradient(900px 400px at 50% -10%, rgba(64,90,140,0.20), transparent 70%)",
+              "radial-gradient(900px 400px at 50% -10%, rgba(58,93,168,0.24), transparent 70%)",
           }}
         />
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
@@ -111,7 +111,7 @@ export default async function ProductPage({
             />
           )}
           {product.badge && (
-            <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-black/15 px-4 py-1.5 text-sm font-medium text-black/60 dark:border-white/15 dark:text-white/60">
+            <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-4 py-1.5 text-sm font-medium text-accent">
               <Sparkles size={15} /> {product.badge}
             </div>
           )}
@@ -151,9 +151,9 @@ export default async function ProductPage({
             return (
               <div
                 key={h.title}
-                className="rounded-2xl border border-black/10 p-6 dark:border-white/10"
+                className="rounded-2xl border border-black/10 p-6 transition hover:border-accent/40 dark:border-white/10 dark:hover:border-accent/40"
               >
-                <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-black/5 dark:bg-white/10">
+                <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-accent/10 text-accent">
                   <Icon size={18} />
                 </div>
                 <h3 className="font-semibold">{h.title}</h3>
@@ -185,12 +185,12 @@ export default async function ProductPage({
                 key={plan.name}
                 className={`flex h-full flex-col rounded-3xl border p-7 ${
                   plan.highlight
-                    ? "border-[#405a8c] bg-[#faf9f5] shadow-xl ring-1 ring-[#405a8c]/30 dark:bg-[#20242e]"
+                    ? "border-[#3a5da8] bg-[#faf9f5] shadow-xl ring-1 ring-[#3a5da8]/30 dark:bg-[#20242e]"
                     : "border-black/10 dark:border-white/10"
                 }`}
               >
                 {plan.highlight && (
-                  <span className="mb-3 w-fit rounded-full bg-[#405a8c] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                  <span className="mb-3 w-fit rounded-full bg-[#3a5da8] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                     Mais escolhido
                   </span>
                 )}
@@ -206,7 +206,7 @@ export default async function ProductPage({
                     <li key={it} className="flex gap-2.5 text-sm">
                       <Check
                         size={17}
-                        className="mt-0.5 shrink-0 text-[#405a8c] dark:text-[#8fb0e6]"
+                        className="mt-0.5 shrink-0 text-[#3a5da8] dark:text-[#9bb9e3]"
                       />
                       <span className="text-black/70 dark:text-white/70">{it}</span>
                     </li>
@@ -237,7 +237,7 @@ export default async function ProductPage({
         <ol className="space-y-6">
           {product.steps.map((step, i) => (
             <li key={step.title} className="flex gap-5">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#141413] font-serif text-lg font-bold text-[#faf9f5] dark:bg-[#e8e6e1] dark:text-[#141413]">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent font-serif text-lg font-bold text-accent-contrast shadow-sm shadow-brand-600/20">
                 {i + 1}
               </span>
               <div className="pt-1">

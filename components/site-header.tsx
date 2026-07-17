@@ -15,18 +15,27 @@ export function SiteHeader({ brand }: { brand: string }) {
           {brand}
         </Link>
         <nav className="flex items-center gap-5 text-sm font-medium">
-          <Link href="/" className="hidden hover:opacity-70 sm:inline">
+          <Link
+            href="/"
+            className="hidden transition-colors hover:text-accent sm:inline"
+          >
             Notícias
           </Link>
-          <Link href="/produtos" className="hidden hover:opacity-70 sm:inline">
+          <Link
+            href="/produtos"
+            className="hidden transition-colors hover:text-accent sm:inline"
+          >
             Produtos
           </Link>
-          <Link href="/cases" className="hidden hover:opacity-70 sm:inline">
+          <Link
+            href="/cases"
+            className="hidden transition-colors hover:text-accent sm:inline"
+          >
             Cases
           </Link>
           <Link
             href="/agendar"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#141413] px-5 py-2 text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2 text-accent-contrast shadow-sm shadow-brand-600/20 transition hover:bg-accent-hover"
           >
             <CalendarCheck size={15} /> Agendar reunião
           </Link>

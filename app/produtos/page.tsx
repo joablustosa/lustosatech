@@ -50,21 +50,23 @@ export default async function ProdutosPage() {
             <Link
               key={p.slug}
               href={`/produtos/${p.slug}`}
-              className="group flex flex-col rounded-2xl border border-black/10 p-8 transition hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+              className="group flex flex-col rounded-2xl border border-black/10 p-8 transition hover:border-accent/50 hover:shadow-lg hover:shadow-brand-600/5 dark:border-white/10 dark:hover:border-accent/50"
             >
               {p.badge && (
-                <span className="mb-4 w-fit rounded-full border border-black/15 px-3 py-1 text-xs font-medium text-black/60 dark:border-white/15 dark:text-white/60">
+                <span className="mb-4 w-fit rounded-full border border-accent/30 bg-accent/5 px-3 py-1 text-xs font-medium text-accent">
                   {p.badge}
                 </span>
               )}
-              <h2 className="font-serif text-3xl font-bold">{p.name}</h2>
+              <h2 className="font-serif text-3xl font-bold transition-colors group-hover:text-accent">
+                {p.name}
+              </h2>
               <p className="mt-2 text-lg text-black/70 dark:text-white/70">
                 {p.tagline}
               </p>
               <p className="mt-3 line-clamp-3 text-sm text-black/60 dark:text-white/60">
                 {p.description}
               </p>
-              <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium">
+              <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-accent">
                 Conhecer
                 <ArrowRight
                   size={16}

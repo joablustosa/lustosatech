@@ -81,13 +81,15 @@ export default async function Home() {
               <Link
                 key={p.slug}
                 href={`/produtos/${p.slug}`}
-                className="group rounded-2xl border border-black/10 p-6 transition hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+                className="group rounded-2xl border border-black/10 p-6 transition hover:border-accent/50 hover:shadow-lg hover:shadow-brand-600/5 dark:border-white/10 dark:hover:border-accent/50"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-serif text-2xl font-bold">{p.name}</span>
+                  <span className="font-serif text-2xl font-bold transition-colors group-hover:text-accent">
+                    {p.name}
+                  </span>
                   <ArrowRight
                     size={18}
-                    className="opacity-40 transition group-hover:translate-x-1 group-hover:opacity-100"
+                    className="text-accent opacity-50 transition group-hover:translate-x-1 group-hover:opacity-100"
                   />
                 </div>
                 <p className="mt-2 text-sm text-black/60 dark:text-white/60">

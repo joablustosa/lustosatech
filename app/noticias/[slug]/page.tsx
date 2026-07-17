@@ -74,7 +74,7 @@ export default async function ArticlePage({
 
       <article className="mx-auto max-w-3xl px-6 py-14">
         <div className="mb-2 flex items-center gap-3 text-xs">
-          <span className="font-medium uppercase tracking-wide text-black/60 dark:text-white/60">
+          <span className="font-semibold uppercase tracking-wide text-accent">
             {news.category}
           </span>
           <span className="text-black/40 dark:text-white/40">
@@ -130,7 +130,7 @@ export default async function ArticlePage({
             {tags.map((t) => (
               <span
                 key={t}
-                className="rounded-full bg-black/[0.06] px-3 py-1 text-xs text-black/60 dark:bg-white/10 dark:text-white/60"
+                className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent"
               >
                 #{t}
               </span>

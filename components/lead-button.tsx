@@ -38,10 +38,10 @@ export function LeadButton({
 
   const btnClass =
     variant === "primary"
-      ? "inline-flex items-center justify-center gap-2 rounded-full bg-[#141413] px-6 py-3 text-base font-medium text-[#faf9f5] transition hover:opacity-90 dark:bg-[#e8e6e1] dark:text-[#141413]"
+      ? "inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-medium text-accent-contrast shadow-sm shadow-brand-600/20 transition hover:bg-accent-hover"
       : variant === "light"
         ? "inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-base font-medium text-[#141413] transition hover:opacity-90"
-        : "inline-flex items-center justify-center gap-2 rounded-full border border-black/20 px-6 py-3 text-base font-medium transition hover:border-black/50 dark:border-white/20 dark:hover:border-white/50";
+        : "inline-flex items-center justify-center gap-2 rounded-full border border-accent/40 px-6 py-3 text-base font-medium text-accent transition hover:border-accent hover:bg-accent/5 dark:border-accent/40 dark:hover:border-accent";
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
