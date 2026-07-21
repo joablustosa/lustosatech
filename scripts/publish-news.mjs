@@ -33,7 +33,9 @@
  * Saída: JSON no stdout com { status, slug, url } ou { skipped, reason }.
  */
 
-const BASE = (process.env.NEWS_API_BASE || "https://lustosatech.com").replace(/\/+$/, "");
+// ATENÇÃO: o apex lustosatech.com NÃO está vinculado ao App Service (retorna
+// 404 da Azure). O host correto do site é www.lustosatech.com.
+const BASE = (process.env.NEWS_API_BASE || "https://www.lustosatech.com").replace(/\/+$/, "");
 const KEY = process.env.NEWS_API_KEY;
 
 const args = process.argv.slice(2);
@@ -180,18 +182,32 @@ async function main() {
     return;
   }
 
-  // capa
+  // capa: gera localmente (OpenAI) e sobe no Azure Blob. Assim o fluxo não
+  // depende de o servidor de produção ter chave da OpenAI / conexão de Blob.
+  // Se faltar env local, cai para o endpoint /api/news/cover do servidor.
   let coverImageUrl = a.coverImageUrl;
   if (!coverImageUrl) {
-    const cover = await api(`/api/news/cover`, {
-      method: "POST",
-      body: JSON.stringify({
+    const hasLocalCover =
+      process.env.OPENAI_API_KEY && process.env.AZURE_STORAGE_CONNECTION_STRING;
+    if (hasLocalCover) {
+      const { generateAndUploadCover } = await import("./news-cover.mjs");
+      const cover = await generateAndUploadCover({
         title: a.title,
         category: a.category,
         summary: a.excerpt,
-      }),
-    });
-    coverImageUrl = cover.url;
+      });
+      coverImageUrl = cover.url;
+    } else {
+      const cover = await api(`/api/news/cover`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: a.title,
+          category: a.category,
+          summary: a.excerpt,
+        }),
+      });
+      coverImageUrl = cover.url;
+    }
   }
 
   // publica
