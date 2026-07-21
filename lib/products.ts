@@ -323,6 +323,11 @@ export const PRODUCTS: Product[] = [
     closingSubline:
       "Comece pelo diagnóstico — 1h, sem compromisso, com preço fechado ao final.",
   },
+  // ===== LT SOCIAL MEDIA STUDIO — DESATIVADO TEMPORARIAMENTE =====
+  // Produto retirado do catálogo por ora. Mantido comentado (e não removido)
+  // para facilitar a reativação: basta apagar o abre-comentário abaixo e o
+  // fecha-comentário logo após o fim deste objeto.
+  /*
   {
     slug: "lt-social-media-agent",
     name: "LT SOCIAL MEDIA STUDIO",
@@ -471,6 +476,8 @@ export const PRODUCTS: Product[] = [
     closingSubline:
       "Comece pelo diagnóstico — 1h, sem compromisso, com escopo e preço fechados ao final.",
   },
+  */
+  // ===== fim do bloco desativado =====
   {
     slug: "lustosa-refactor",
     name: "LUSTOSA REFACTOR",
