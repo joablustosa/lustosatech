@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Check, KeyRound, Bot, MessageCircle } from "lucide-react";
+import { Save, Check, KeyRound, Bot, MessageCircle, Newspaper } from "lucide-react";
 
 type Values = Record<string, string>;
 type Secrets = Record<string, boolean>;
@@ -51,6 +51,7 @@ export default function SettingsPage() {
         ...prev,
         openaiApiKey: "",
         whatsappAccessToken: "",
+        newsApiKey: "",
         whatsappVerifyToken: prev.whatsappVerifyToken,
       }));
     }
@@ -103,6 +104,35 @@ export default function SettingsPage() {
                 : "sk-..."
             }
           />
+        </div>
+      </section>
+
+      {/* Automação de notícias */}
+      <section className="card space-y-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Newspaper size={18} className="text-brand-600" /> Automação de notícias
+        </h2>
+        <div>
+          <label className="label">
+            Chave de publicação (header <code>x-api-key</code>)
+          </label>
+          <input
+            className="input font-mono"
+            type="password"
+            value={values.newsApiKey || ""}
+            onChange={(e) => set("newsApiKey", e.target.value)}
+            placeholder={
+              secretsSet.newsApiKey
+                ? "•••••••• (configurada — deixe em branco para manter)"
+                : "news_..."
+            }
+          />
+          <p className="mt-1.5 text-xs muted">
+            Usada pelos agentes para publicar em <code>POST /api/news</code>. O
+            valor salvo aqui tem prioridade sobre a variável de ambiente
+            <code> NEWS_API_KEY</code> e passa a valer imediatamente, sem
+            reiniciar o app.
+          </p>
         </div>
       </section>
 

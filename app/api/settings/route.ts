@@ -12,6 +12,10 @@ const ALLOWED_KEYS = [
   "whatsappVerifyToken",
   "whatsappBusinessAccountId",
   "bookingBaseUrl",
+  // Chave usada por agentes/automação para publicar notícias (x-api-key).
+  // Fica aqui para poder ser definida pela tela, sem depender de variável de
+  // ambiente (que exige reiniciar o App Service).
+  "newsApiKey",
 ];
 
 export async function GET() {

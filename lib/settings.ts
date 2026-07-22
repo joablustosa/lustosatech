@@ -9,12 +9,14 @@ export const SETTING_ENV_FALLBACK: Record<string, string | undefined> = {
   whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN,
   whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
+  newsApiKey: process.env.NEWS_API_KEY,
 };
 
 export const SECRET_KEYS = new Set([
   "openaiApiKey",
   "whatsappAccessToken",
   "whatsappVerifyToken",
+  "newsApiKey",
 ]);
 
 export type SettingKey =
@@ -25,7 +27,8 @@ export type SettingKey =
   | "whatsappPhoneNumberId"
   | "whatsappVerifyToken"
   | "whatsappBusinessAccountId"
-  | "bookingBaseUrl";
+  | "bookingBaseUrl"
+  | "newsApiKey";
 
 export async function getAllSettings(): Promise<Record<string, string>> {
   const rows = await prisma.setting.findMany();

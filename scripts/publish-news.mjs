@@ -156,8 +156,46 @@ async function isDuplicate(article) {
 
 // --- main -----------------------------------------------------------------
 
+/**
+ * Confere a autenticação ANTES de gerar a capa. Sem isto, um 401 só aparecia no
+ * final — depois de já ter gasto uma geração de imagem na OpenAI e feito upload
+ * no Blob. Um POST com corpo vazio é rejeitado na validação (400) sem criar
+ * nada, então serve de sonda barata: 400 = autorizado, 401 = chave inválida.
+ */
+async function preflightAuth() {
+  let res;
+  try {
+    res = await fetch(`${BASE}/api/news`, {
+      method: "POST",
+      headers: { "x-api-key": KEY, "content-type": "application/json" },
+      body: "{}",
+    });
+  } catch (e) {
+    die(`Não consegui falar com ${BASE}: ${e.message}`);
+  }
+  if (res.status === 401) {
+    die(
+      "NEWS_API_KEY rejeitada pelo servidor (401). Nada foi gerado nem publicado.",
+      {
+        base: BASE,
+        chaveEnviada: `${KEY.slice(0, 8)}…${KEY.slice(-4)} (${KEY.length} caracteres)`,
+        comoResolver: [
+          "A chave local (.env) precisa ser IGUAL à do servidor.",
+          "No servidor, o valor esperado vem de Setting 'newsApiKey' no banco (tem prioridade) ou da variável de ambiente NEWS_API_KEY.",
+          "Se existir a linha newsApiKey na tabela Setting, é ELA que vale — a variável de ambiente é ignorada.",
+        ],
+      }
+    );
+  }
+}
+
 async function main() {
-  if (!KEY) die("Defina NEWS_API_KEY no ambiente.");
+  if (!KEY || !KEY.trim()) {
+    die(
+      "NEWS_API_KEY está vazia. Preencha no .env do projeto (a automação roda localmente e usa --env-file=.env).",
+      { base: BASE }
+    );
+  }
   const a = await readInput();
   for (const f of ["title", "excerpt", "content"]) {
     if (!a[f] || !String(a[f]).trim()) die(`Campo obrigatório ausente: ${f}`);
@@ -181,6 +219,9 @@ async function main() {
     console.log(JSON.stringify({ dryRun: true, wouldPublish: a.title }, null, 2));
     return;
   }
+
+  // Só depois de saber que a publicação vai ser aceita é que gastamos com imagem.
+  await preflightAuth();
 
   // capa: gera localmente (OpenAI) e sobe no Azure Blob. Assim o fluxo não
   // depende de o servidor de produção ter chave da OpenAI / conexão de Blob.
