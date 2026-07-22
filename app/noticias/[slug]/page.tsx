@@ -116,9 +116,25 @@ export default async function ArticlePage({
           />
         )}
 
-        {news.mediaType === "video" && news.mediaUrl && (
-          <video src={news.mediaUrl} controls className="mt-8 w-full rounded-2xl" />
-        )}
+        {/* Mídia da matéria. Antes só o vídeo era exibido: uma imagem enviada
+            como mídia ficava salva no banco mas nunca aparecia na página.
+            Não repete a capa quando as duas URLs são iguais. */}
+        {news.mediaUrl &&
+          news.mediaUrl !== news.coverImageUrl &&
+          (news.mediaType === "video" ? (
+            <video
+              src={news.mediaUrl}
+              controls
+              className="mt-8 w-full rounded-2xl"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={news.mediaUrl}
+              alt={news.title}
+              className="mt-8 w-full rounded-2xl object-cover"
+            />
+          ))}
 
         <div
           className="article-body mt-8"

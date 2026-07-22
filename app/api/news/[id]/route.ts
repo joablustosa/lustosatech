@@ -3,23 +3,33 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api";
 import { uniqueSlug } from "@/lib/news";
+import {
+  MEDIA_TYPES,
+  NEWS_STATUS,
+  optionalBool,
+  optionalDate,
+  optionalEnum,
+  optionalText,
+  optionalUrl,
+  requiredText,
+} from "@/lib/news-schema";
 
 const patchSchema = z.object({
-  title: z.string().min(1).optional(),
-  slug: z.string().optional(),
-  category: z.string().optional(),
-  excerpt: z.string().min(1).optional(),
-  content: z.string().min(1).optional(),
-  coverImageUrl: z.string().url().optional().or(z.literal("")),
-  mediaType: z.enum(["image", "video"]).optional(),
-  mediaUrl: z.string().url().optional().or(z.literal("")),
-  author: z.string().optional(),
-  source: z.string().optional(),
-  sourceUrl: z.string().url().optional().or(z.literal("")),
-  tags: z.string().optional(),
-  featured: z.boolean().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  publishedAt: z.string().optional(),
+  title: requiredText("Título obrigatório").optional(),
+  slug: optionalText,
+  category: optionalText,
+  excerpt: requiredText("Resumo obrigatório").optional(),
+  content: requiredText("Conteúdo obrigatório").optional(),
+  coverImageUrl: optionalUrl,
+  mediaType: optionalEnum(MEDIA_TYPES),
+  mediaUrl: optionalUrl,
+  author: optionalText,
+  source: optionalText,
+  sourceUrl: optionalUrl,
+  tags: optionalText,
+  featured: optionalBool,
+  status: optionalEnum(NEWS_STATUS),
+  publishedAt: optionalDate,
 });
 
 export async function GET(
@@ -51,20 +61,34 @@ export async function PATCH(
   }
   const d = parsed.data;
 
-  const data: Record<string, unknown> = { ...d };
+  // Monta o update explicitamente: `undefined` = campo não enviado (não altera),
+  // `null` = usuário limpou o campo (grava null). Colunas NOT NULL nunca
+  // recebem null — para elas, null é tratado como "não informado".
+  const data: Record<string, unknown> = {};
+
+  // obrigatórias no banco (NOT NULL)
+  if (d.title !== undefined) data.title = d.title;
+  if (d.excerpt !== undefined) data.excerpt = d.excerpt;
+  if (d.content !== undefined) data.content = d.content;
+  if (d.category != null) data.category = d.category;
+  if (d.mediaType !== undefined) data.mediaType = d.mediaType;
+  if (d.status !== undefined) data.status = d.status;
+  if (d.featured !== undefined) data.featured = d.featured;
+  if (d.publishedAt != null) data.publishedAt = new Date(d.publishedAt);
+
+  // opcionais (nuláveis): null limpa o campo
+  if (d.coverImageUrl !== undefined) data.coverImageUrl = d.coverImageUrl;
+  if (d.mediaUrl !== undefined) data.mediaUrl = d.mediaUrl;
+  if (d.author !== undefined) data.author = d.author;
+  if (d.source !== undefined) data.source = d.source;
+  if (d.sourceUrl !== undefined) data.sourceUrl = d.sourceUrl;
+  if (d.tags !== undefined) data.tags = d.tags;
+
   if (d.slug || d.title) {
     data.slug = await uniqueSlug(d.slug || d.title!, id);
   }
-  if (d.publishedAt) data.publishedAt = new Date(d.publishedAt);
-  // normaliza strings vazias em null nos campos opcionais
-  for (const k of ["coverImageUrl", "mediaUrl", "sourceUrl", "author", "source", "tags"]) {
-    if (data[k] === "") data[k] = null;
-  }
 
-  const news = await prisma.news.update({
-    where: { id },
-    data: data as any,
-  });
+  const news = await prisma.news.update({ where: { id }, data });
   return NextResponse.json(news);
 }
 

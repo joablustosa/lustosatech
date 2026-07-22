@@ -39,16 +39,56 @@ const empty: NewsData = {
   status: "published",
 };
 
+/**
+ * O banco devolve `null` nos campos opcionais. Como os inputs são controlados,
+ * `null` viraria input não-controlado e o valor era reenviado como null para a
+ * API. Aqui tudo vira string desde o início.
+ */
+function toFormState(initial?: NewsData): NewsData {
+  const m = { ...empty, ...initial };
+  return {
+    ...m,
+    coverImageUrl: m.coverImageUrl ?? "",
+    mediaUrl: m.mediaUrl ?? "",
+    author: m.author ?? "",
+    source: m.source ?? "",
+    sourceUrl: m.sourceUrl ?? "",
+    tags: m.tags ?? "",
+    mediaType: m.mediaType || "image",
+    category: m.category || "Novidades",
+    status: m.status || "published",
+  };
+}
+
 export function NewsForm({ initial }: { initial?: NewsData }) {
   const router = useRouter();
   const isEdit = !!initial?.id;
-  const [data, setData] = useState<NewsData>({ ...empty, ...initial });
+  const [data, setData] = useState<NewsData>(() => toFormState(initial));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"cover" | "media" | null>(null);
   const [error, setError] = useState("");
 
   function set<K extends keyof NewsData>(key: K, value: NewsData[K]) {
     setData((d) => ({ ...d, [key]: value }));
+  }
+
+  /**
+   * Lê a resposta com tolerância: uploads que estouram limite de tamanho ou
+   * caem em erro de proxy voltam HTML, e um res.json() direto quebraria com
+   * "Unexpected token '<'" — mensagem inútil para quem está publicando.
+   */
+  async function readResponse(res: Response): Promise<Record<string, any>> {
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      if (res.status === 413) {
+        return { error: "Arquivo muito grande para o servidor." };
+      }
+      return {
+        error: `Resposta inesperada do servidor (HTTP ${res.status}).`,
+      };
+    }
   }
 
   async function upload(file: File, target: "cover" | "media") {
@@ -58,13 +98,14 @@ export function NewsForm({ initial }: { initial?: NewsData }) {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/news/upload", { method: "POST", body: fd });
-      const json = await res.json();
+      const json = await readResponse(res);
       if (!res.ok) throw new Error(json.error || "Falha no upload");
+      if (!json.url) throw new Error("O servidor não retornou a URL do arquivo.");
       if (target === "cover") {
         set("coverImageUrl", json.url);
       } else {
         set("mediaUrl", json.url);
-        set("mediaType", json.mediaType);
+        set("mediaType", json.mediaType === "video" ? "video" : "image");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro no upload");
@@ -81,11 +122,21 @@ export function NewsForm({ initial }: { initial?: NewsData }) {
     }
     setSaving(true);
     try {
+      // Envia sempre strings ("" limpa o campo). A API normaliza "" -> null.
       const payload = {
-        ...data,
-        coverImageUrl: data.coverImageUrl || undefined,
-        mediaUrl: data.mediaUrl || undefined,
-        sourceUrl: data.sourceUrl || undefined,
+        title: data.title.trim(),
+        category: data.category,
+        excerpt: data.excerpt.trim(),
+        content: data.content,
+        coverImageUrl: data.coverImageUrl ?? "",
+        mediaType: data.mediaType || "image",
+        mediaUrl: data.mediaUrl ?? "",
+        author: data.author ?? "",
+        source: data.source ?? "",
+        sourceUrl: data.sourceUrl ?? "",
+        tags: data.tags ?? "",
+        featured: data.featured,
+        status: data.status,
       };
       const res = await fetch(
         isEdit ? `/api/news/${initial!.id}` : "/api/news",
@@ -95,7 +146,7 @@ export function NewsForm({ initial }: { initial?: NewsData }) {
           body: JSON.stringify(payload),
         }
       );
-      const json = await res.json();
+      const json = await readResponse(res);
       if (!res.ok) throw new Error(json.error || "Falha ao salvar");
       router.push("/admin/news");
       router.refresh();

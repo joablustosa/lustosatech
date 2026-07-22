@@ -3,25 +3,35 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { uniqueSlug, hasValidApiKey } from "@/lib/news";
+import {
+  MEDIA_TYPES,
+  NEWS_STATUS,
+  optionalBool,
+  optionalDate,
+  optionalEnum,
+  optionalText,
+  optionalUrl,
+  requiredText,
+} from "@/lib/news-schema";
 
 export const dynamic = "force-dynamic";
 
 const createSchema = z.object({
-  title: z.string().min(1, "Título obrigatório"),
-  slug: z.string().optional(),
-  category: z.string().optional(),
-  excerpt: z.string().min(1, "Resumo obrigatório"),
-  content: z.string().min(1, "Conteúdo obrigatório"),
-  coverImageUrl: z.string().url().optional().or(z.literal("")),
-  mediaType: z.enum(["image", "video"]).optional(),
-  mediaUrl: z.string().url().optional().or(z.literal("")),
-  author: z.string().optional(),
-  source: z.string().optional(),
-  sourceUrl: z.string().url().optional().or(z.literal("")),
-  tags: z.string().optional(),
-  featured: z.boolean().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  publishedAt: z.string().optional(),
+  title: requiredText("Título obrigatório"),
+  slug: optionalText,
+  category: optionalText,
+  excerpt: requiredText("Resumo obrigatório"),
+  content: requiredText("Conteúdo obrigatório"),
+  coverImageUrl: optionalUrl,
+  mediaType: optionalEnum(MEDIA_TYPES),
+  mediaUrl: optionalUrl,
+  author: optionalText,
+  source: optionalText,
+  sourceUrl: optionalUrl,
+  tags: optionalText,
+  featured: optionalBool,
+  status: optionalEnum(NEWS_STATUS),
+  publishedAt: optionalDate,
 });
 
 /** Lista notícias. Público vê apenas publicadas. */
@@ -76,18 +86,18 @@ export async function POST(req: NextRequest) {
     data: {
       title: d.title,
       slug,
-      category: d.category || "Novidades",
+      category: d.category ?? "Novidades",
       excerpt: d.excerpt,
       content: d.content,
-      coverImageUrl: d.coverImageUrl || null,
-      mediaType: d.mediaType || "image",
-      mediaUrl: d.mediaUrl || null,
-      author: d.author || null,
-      source: d.source || null,
-      sourceUrl: d.sourceUrl || null,
-      tags: d.tags || null,
+      coverImageUrl: d.coverImageUrl ?? null,
+      mediaType: d.mediaType ?? "image",
+      mediaUrl: d.mediaUrl ?? null,
+      author: d.author ?? null,
+      source: d.source ?? null,
+      sourceUrl: d.sourceUrl ?? null,
+      tags: d.tags ?? null,
       featured: d.featured ?? false,
-      status: d.status || "published",
+      status: d.status ?? "published",
       publishedAt: d.publishedAt ? new Date(d.publishedAt) : new Date(),
     },
   });
