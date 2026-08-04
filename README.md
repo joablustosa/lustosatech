@@ -267,7 +267,7 @@ next.config.mjs    # serverExternalPackages: fluent-ffmpeg, ffmpeg-static, @goog
 | `WHATSAPP_ACCESS_TOKEN/PHONE_NUMBER_ID/VERIFY_TOKEN` | Fallback do WhatsApp |
 | `NEXT_PUBLIC_BASE_URL` | URL pública (links de agendamento) |
 | `NEWS_API_KEY` / `NEWS_API_BASE` | Automação de notícias |
-| `VIDEO_SCRIPT_MODEL` / `VIDEO_VEO_MODEL` | Overrides de modelo (padrões: `gpt-4o`, `veo-3.1-generate-001` com fallback `veo-3.1-fast-generate-001`) |
+| `VIDEO_SCRIPT_MODEL` / `VIDEO_VEO_MODEL` | Overrides de modelo (padrões: `gpt-4o`; o Veo é descoberto automaticamente via ListModels da chave, com preferência pelo mais novo/qualidade padrão) |
 
 ## Como rodar (dev)
 

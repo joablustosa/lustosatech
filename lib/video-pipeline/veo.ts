@@ -5,12 +5,15 @@ import {
   type FormatOptions,
 } from "./format";
 
-// Modelos tentados em ordem: o veo-3.0-generate-001 foi aposentado da API
-// v1beta (404 NOT_FOUND), então os GA atuais são os da família Veo 3.1.
-const FALLBACK_MODELS = ["veo-3.1-generate-001", "veo-3.1-fast-generate-001"];
-const VEO_MODELS = process.env.VIDEO_VEO_MODEL
-  ? [process.env.VIDEO_VEO_MODEL, ...FALLBACK_MODELS]
-  : FALLBACK_MODELS;
+// Fallback usado apenas se o ListModels falhar (ex.: instabilidade da API).
+// No endpoint v1beta da Gemini API os IDs costumam ser os "-preview";
+// os "-001" (GA) são do Vertex AI.
+const FALLBACK_MODELS = [
+  "veo-3.1-generate-preview",
+  "veo-3.1-fast-generate-preview",
+  "veo-3.1-generate-001",
+  "veo-3.1-fast-generate-001",
+];
 const POLL_MS = 10_000;
 const TIMEOUT_MS = 10 * 60_000;
 
@@ -21,6 +24,72 @@ function sleep(ms: number) {
 function isModelNotFound(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return msg.includes("NOT_FOUND") || msg.includes("is not found");
+}
+
+/**
+ * Ordena os modelos Veo por preferência: versão mais nova primeiro,
+ * qualidade padrão antes de "fast"/"lite", estável (-001) antes de preview.
+ */
+function sortVeoModels(models: string[]): string[] {
+  const score = (m: string) => {
+    const version = parseFloat(m.match(/veo-(\d+\.\d+)/)?.[1] ?? "0");
+    const quality = m.includes("lite") ? 0 : m.includes("fast") ? 1 : 2;
+    const stable = m.includes("preview") ? 0 : 1;
+    return version * 100 + quality * 10 + stable;
+  };
+  return [...models].sort((a, b) => score(b) - score(a));
+}
+
+let discoveredModels: string[] | null = null;
+
+/**
+ * Consulta o ListModels da Gemini API e retorna os modelos Veo que a chave
+ * realmente enxerga e que suportam predictLongRunning (geração de vídeo).
+ * O resultado é cacheado no processo. Se a chave for de tier gratuito o
+ * Veo não aparece na lista — nesse caso lançamos um erro explicativo.
+ */
+async function discoverVeoModels(apiKey: string): Promise<string[]> {
+  if (discoveredModels) return discoveredModels;
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",
+      { headers: { "x-goog-api-key": apiKey } }
+    );
+    const json = (await res.json()) as {
+      error?: { message?: string };
+      models?: { name: string; supportedGenerationMethods?: string[] }[];
+    };
+    if (json.error) {
+      throw new Error(json.error.message || "erro desconhecido no ListModels");
+    }
+    const veo = (json.models ?? [])
+      .filter(
+        (m) =>
+          m.name.toLowerCase().includes("veo") &&
+          (m.supportedGenerationMethods ?? []).includes("predictLongRunning")
+      )
+      .map((m) => m.name.replace(/^models\//, ""));
+    if (veo.length === 0) {
+      throw new Error(
+        "A chave GEMINI_API_KEY não tem acesso a nenhum modelo Veo. " +
+          "O Veo exige plano pago (billing ativo no projeto do Google AI Studio). " +
+          "Verifique o faturamento da chave ou use outra."
+      );
+    }
+    discoveredModels = sortVeoModels(veo);
+    console.log(
+      `[video-pipeline] Modelos Veo disponíveis: ${discoveredModels.join(", ")}`
+    );
+    return discoveredModels;
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("GEMINI_API_KEY")) {
+      throw err;
+    }
+    console.warn(
+      `[video-pipeline] ListModels falhou (${err instanceof Error ? err.message : err}); usando lista de fallback.`
+    );
+    return FALLBACK_MODELS;
+  }
 }
 
 /**
@@ -43,13 +112,19 @@ export async function generateVideoClip(
 
   const ai = new GoogleGenAI({ apiKey });
 
+  // Override manual vem primeiro; depois os modelos descobertos na API.
+  const candidates = [
+    ...(process.env.VIDEO_VEO_MODEL ? [process.env.VIDEO_VEO_MODEL] : []),
+    ...(await discoverVeoModels(apiKey)),
+  ].filter((m, i, arr) => arr.indexOf(m) === i);
+
   const fullPrompt = `${buildStylePrefix(formatOptions)}\n\n${prompt}`;
   const aspectRatio = veoAspectRatio(formatOptions.format);
 
   let operation: Awaited<ReturnType<typeof ai.models.generateVideos>> | null =
     null;
   let lastError: unknown = null;
-  for (const model of VEO_MODELS) {
+  for (const model of candidates) {
     try {
       operation = await ai.models.generateVideos({
         model,
@@ -70,7 +145,7 @@ export async function generateVideoClip(
   }
   if (!operation) {
     throw new Error(
-      `Nenhum modelo Veo disponível (tentados: ${VEO_MODELS.join(", ")}). ` +
+      `Nenhum modelo Veo funcionou (tentados: ${candidates.join(", ")}). ` +
         `Último erro: ${lastError instanceof Error ? lastError.message : String(lastError)}`
     );
   }
