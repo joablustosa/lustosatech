@@ -106,3 +106,23 @@ model News {
   @@index([status, publishedAt])
   @@index([category])
 }
+
+/// Agendamento de postagens de vídeo (calendário editorial)
+model VideoPost {
+  id                 String   @id @default(cuid())
+  title              String
+  prompt             String   @db.Text // prompt do roteiro
+  accountName        String // conta que fará a postagem
+  scheduledAt        DateTime
+  platformInstagram  Boolean  @default(false)
+  platformYoutube    Boolean  @default(false)
+  platformTiktok     Boolean  @default(false)
+  platformKwai       Boolean  @default(false)
+  autoSend           Boolean  @default(false)
+  status             String   @default("scheduled") // draft | scheduled | published | failed
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([scheduledAt])
+  @@index([status])
+}

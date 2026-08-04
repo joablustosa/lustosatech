@@ -14,7 +14,7 @@ export default async function PanelLayout({
     <div className="flex min-h-screen">
       <Sidebar userName={session.user.name || session.user.email || "Admin"} />
       <main className="flex-1 overflow-x-hidden px-6 py-8 sm:px-10">
-        <div className="mx-auto max-w-5xl animate-fade-in">{children}</div>
+        <div className="mx-auto w-full max-w-7xl animate-fade-in">{children}</div>
       </main>
     </div>
   );

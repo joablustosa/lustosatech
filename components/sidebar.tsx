@@ -8,8 +8,8 @@ import {
   FileText,
   Settings,
   CalendarClock,
+  CalendarDays,
   MessagesSquare,
-  MessageCircle,
   LogOut,
   Moon,
   Sun,
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/news", label: "Notícias", icon: Newspaper },
+  { href: "/admin/video-posts", label: "Postagens", icon: CalendarDays },
   { href: "/admin/conversations", label: "Conversas", icon: MessagesSquare },
   { href: "/admin/documents", label: "Documentos", icon: FileText },
   { href: "/admin/availability", label: "Horários", icon: CalendarClock },
