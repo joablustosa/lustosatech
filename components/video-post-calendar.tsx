@@ -83,6 +83,39 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   failed: { label: "Falhou", className: "bg-red-500/15 text-red-600" },
 };
 
+const PIPELINE_STEPS = [
+  {
+    id: "generating_script",
+    label: "Gerar roteiro (GPT)",
+    statuses: ["generating_script"],
+  },
+  {
+    id: "script_ready",
+    label: "Dividir em cenas",
+    statuses: ["script_ready"],
+  },
+  {
+    id: "generating_assets",
+    label: "Gerar clipes e narração",
+    statuses: ["generating_assets"],
+  },
+  {
+    id: "assembling",
+    label: "Montar vídeo final",
+    statuses: ["assembling"],
+  },
+  {
+    id: "sending",
+    label: "Entregar (webhook / Blob)",
+    statuses: ["sending"],
+  },
+  {
+    id: "sent",
+    label: "Concluído",
+    statuses: ["sent", "published"],
+  },
+];
+
 const IN_PROGRESS_STATUSES = new Set([
   "generating_script",
   "script_ready",
@@ -90,6 +123,28 @@ const IN_PROGRESS_STATUSES = new Set([
   "assembling",
   "sending",
 ]);
+
+const PIPELINE_ORDER = [
+  "generating_script",
+  "script_ready",
+  "generating_assets",
+  "assembling",
+  "sending",
+  "sent",
+];
+
+function stepState(
+  status: string,
+  stepIndex: number
+): "done" | "current" | "pending" | "failed" {
+  if (status === "failed") return stepIndex === 0 ? "failed" : "pending";
+  if (status === "sent" || status === "published") return "done";
+  const cur = PIPELINE_ORDER.indexOf(status);
+  if (cur < 0) return "pending";
+  if (stepIndex < cur) return "done";
+  if (stepIndex === cur) return "current";
+  return "pending";
+}
 
 type FormState = {
   title: string;
@@ -334,6 +389,73 @@ export function VideoPostCalendar() {
     load();
   }, [load]);
 
+  // Polling: enquanto o modal estiver aberto em um status de pipeline,
+  // atualiza o post + detalhe a cada 3s. O processamento roda no servidor —
+  // o modal NÃO precisa ficar aberto, mas se estiver, o usuário vê o progresso.
+  useEffect(() => {
+    if (!modalOpen || !editing) return;
+    if (
+      !IN_PROGRESS_STATUSES.has(editing.status) &&
+      editing.status !== "failed" &&
+      editing.status !== "sent"
+    ) {
+      return;
+    }
+    // Só faz polling contínuo enquanto está em progresso.
+    if (!IN_PROGRESS_STATUSES.has(editing.status)) return;
+
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/video-posts/${editing.id}`);
+        if (!res.ok || cancelled) return;
+        const d: VideoPostDetail = await res.json();
+        if (cancelled) return;
+        setDetail(d);
+        setEditing((prev) =>
+          prev && prev.id === d.id
+            ? {
+                ...prev,
+                status: d.status,
+                error: d.error,
+                finalVideoUrl: d.finalVideoUrl,
+              }
+            : prev
+        );
+        setPosts((list) =>
+          list.map((p) =>
+            p.id === d.id
+              ? {
+                  ...p,
+                  status: d.status,
+                  error: d.error,
+                  finalVideoUrl: d.finalVideoUrl,
+                }
+              : p
+          )
+        );
+      } catch {
+        /* ignore transient errors */
+      }
+    };
+    tick();
+    const id = setInterval(tick, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [modalOpen, editing?.id, editing?.status]);
+
+  // Também atualiza a grade do calendário se houver posts em andamento.
+  useEffect(() => {
+    const anyRunning = posts.some((p) => IN_PROGRESS_STATUSES.has(p.status));
+    if (!anyRunning || modalOpen) return;
+    const id = setInterval(() => {
+      load();
+    }, 10000);
+    return () => clearInterval(id);
+  }, [posts, modalOpen, load]);
+
   function openCreate(day?: Date) {
     setEditing(null);
     setForm(emptyForm(day));
@@ -397,7 +519,7 @@ export function VideoPostCalendar() {
     if (!editing) return;
     if (
       !confirm(
-        "Enviar agora? O vídeo será gerado e enviado imediatamente, sem esperar o horário agendado."
+        "Enviar agora? O vídeo será gerado e enviado no servidor. Você pode fechar este modal — o status atualiza sozinho quando reabrir."
       )
     )
       return;
@@ -410,10 +532,22 @@ export function VideoPostCalendar() {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(d.error || "Erro ao enviar agora.");
+        if (d.post) {
+          setEditing(d.post);
+          setForm(formFromPost(d.post));
+        }
         return;
       }
       setEditing(d);
       setForm(formFromPost(d));
+      setDetail(null);
+      // Carrega o detalhe logo e o polling cuida do resto.
+      fetch(`/api/video-posts/${d.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((full) => {
+          if (full) setDetail(full);
+        })
+        .catch(() => {});
       load();
     } finally {
       setSendingNow(false);
@@ -671,7 +805,14 @@ export function VideoPostCalendar() {
             </div>
 
             <div className="space-y-4 px-5 py-4">
-              {editing && <PipelinePanel post={editing} detail={detail} />}
+              {editing && (
+                <PipelinePanel
+                  post={editing}
+                  detail={detail}
+                  onRetry={sendNow}
+                  retrying={sendingNow}
+                />
+              )}
               <div>
                 <label className="label">Título</label>
                 <input
@@ -1012,30 +1153,132 @@ function StatusBadge({ status }: { status: string }) {
 function PipelinePanel({
   post,
   detail,
+  onRetry,
+  retrying,
 }: {
   post: VideoPost;
   detail: VideoPostDetail | null;
+  onRetry?: () => void;
+  retrying?: boolean;
 }) {
   const [showScript, setShowScript] = useState(false);
 
-  const hasPipelineData =
-    detail?.script || detail?.finalVideoUrl || post.status === "failed";
-  if (!hasPipelineData) return null;
+  const inProgress = IN_PROGRESS_STATUSES.has(post.status);
+  const showPanel =
+    inProgress ||
+    post.status === "failed" ||
+    post.status === "sent" ||
+    post.status === "published" ||
+    detail?.script ||
+    detail?.finalVideoUrl ||
+    post.finalVideoUrl;
+
+  if (!showPanel) return null;
 
   const script = detail?.script;
   const finalVideoUrl = detail?.finalVideoUrl || post.finalVideoUrl;
   const errorMsg = detail?.error || post.error;
 
+  // Para falha, marca etapas anteriores com base no que já existe.
+  const failedAtIndex = (() => {
+    if (post.status !== "failed") return -1;
+    if (finalVideoUrl) return 4;
+    if (script?.prompts?.some((p) => p.videoUrl)) return 2;
+    if (script?.prompts?.length) return 1;
+    if (script) return 0;
+    return 0;
+  })();
+
   return (
     <div className="space-y-3 rounded-xl border p-3 [border-color:var(--border)]">
-      <p className="flex items-center gap-2 text-sm font-semibold">
-        <Film size={15} className="text-brand-600" /> Pipeline do vídeo
-      </p>
-
-      {post.status === "failed" && errorMsg && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          {errorMsg}
+      <div className="flex items-start justify-between gap-2">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <Film size={15} className="text-brand-600" /> Pipeline do vídeo
         </p>
+        <StatusBadge status={post.status} />
+      </div>
+
+      {inProgress && (
+        <p className="rounded-lg bg-brand-600/5 px-3 py-2 text-xs text-brand-600">
+          Processamento no servidor — pode fechar este modal. Ao reabrir, o
+          status continua de onde parou. Esta tela atualiza sozinha a cada 3s.
+        </p>
+      )}
+
+      <ol className="space-y-1.5">
+        {PIPELINE_STEPS.map((step, i) => {
+          let state: "done" | "current" | "pending" | "failed" = stepState(
+            post.status,
+            i
+          );
+          if (post.status === "failed") {
+            if (i < failedAtIndex) state = "done";
+            else if (i === failedAtIndex) state = "failed";
+            else state = "pending";
+          }
+          return (
+            <li
+              key={step.id}
+              className="flex items-center gap-2 text-xs"
+            >
+              <span
+                className={cn(
+                  "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                  state === "done" && "bg-emerald-500/15 text-emerald-600",
+                  state === "current" && "bg-amber-500/15 text-amber-600",
+                  state === "failed" && "bg-red-500/15 text-red-600",
+                  state === "pending" && "bg-black/5 text-black/40 dark:bg-white/10 dark:text-white/40"
+                )}
+              >
+                {state === "done" ? (
+                  <Check size={11} />
+                ) : state === "current" ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : state === "failed" ? (
+                  "!"
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <span
+                className={cn(
+                  state === "pending" && "muted",
+                  state === "current" && "font-semibold text-amber-600",
+                  state === "failed" && "font-semibold text-red-600",
+                  state === "done" && "text-emerald-700 dark:text-emerald-400"
+                )}
+              >
+                {step.label}
+                {state === "current" && " — em andamento..."}
+                {state === "failed" && " — falhou"}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      {post.status === "failed" && (
+        <div className="space-y-2">
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            {errorMsg ||
+              "O processamento falhou sem mensagem. Verifique as chaves OPENAI/GEMINI/ELEVENLABS e o Azure Blob no App Service, e tente novamente."}
+          </p>
+          {onRetry && (
+            <button
+              type="button"
+              className="btn-outline px-3 py-1.5 text-xs"
+              onClick={onRetry}
+              disabled={retrying}
+            >
+              {retrying ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Zap size={13} />
+              )}
+              Tentar novamente
+            </button>
+          )}
+        </div>
       )}
 
       {script && (

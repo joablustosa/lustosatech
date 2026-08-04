@@ -1,5 +1,5 @@
 import { prisma } from "../db";
-import { uploadToBlob } from "../blob";
+import { uploadToBlob, isBlobConfigured } from "../blob";
 import { generateScript, splitIntoScenes } from "./script";
 import { generateVideoClip } from "./veo";
 import { generateNarration } from "./elevenlabs";
@@ -8,9 +8,11 @@ import { deliverVideo } from "./deliver";
 import { normalizeFormatOptions, targetDimensions } from "./format";
 
 const INTERVAL_MS = 60_000; // 1 em 1 minuto
+// Postagens "travadas" em status intermediário são retomadas após este tempo
+// (o processo no Azure pode morrer após a resposta HTTP; 2 min é recuperável).
+const STALE_MS = 2 * 60_000;
 
-// Status intermediários retomados caso o processo tenha caído no meio.
-const RESUMABLE_STATUSES = [
+export const RESUMABLE_STATUSES = [
   "generating_script",
   "script_ready",
   "generating_assets",
@@ -20,13 +22,81 @@ const RESUMABLE_STATUSES = [
 
 let running = false;
 
+/** Valida envs obrigatórias do pipeline e falha cedo com mensagem clara. */
+async function assertPipelineReady(): Promise<void> {
+  const missing: string[] = [];
+  if (!process.env.OPENAI_API_KEY) missing.push("OPENAI_API_KEY");
+  if (!process.env.GEMINI_API_KEY) missing.push("GEMINI_API_KEY");
+  if (!process.env.ELEVENLABS_API_KEY) missing.push("ELEVENLABS_API_KEY");
+  if (!(await isBlobConfigured())) {
+    missing.push("AZURE_STORAGE_CONNECTION_STRING");
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `Pipeline sem configuração: faltam ${missing.join(", ")}. ` +
+        "Defina essas variáveis no App Service (ou no .env) e tente novamente."
+    );
+  }
+}
+
+async function markFailed(postId: string, err: unknown): Promise<void> {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`[video-worker] post ${postId} falhou:`, message);
+  await prisma.videoPost
+    .update({
+      where: { id: postId },
+      data: { status: "failed", error: message.slice(0, 4000) },
+    })
+    .catch(() => {});
+}
+
+/**
+ * Reivindica e processa uma postagem específica (usado pelo "Enviar agora").
+ * Retorna false se outro processo já tiver reivindicado o post.
+ */
+export async function processVideoPostById(postId: string): Promise<boolean> {
+  const post = await prisma.videoPost.findUnique({ where: { id: postId } });
+  if (!post) return false;
+
+  const claimable =
+    post.status === "scheduled" ||
+    post.status === "failed" ||
+    post.status === "sent" ||
+    RESUMABLE_STATUSES.includes(post.status);
+
+  if (!claimable) return false;
+
+  const { count } = await prisma.videoPost.updateMany({
+    where: { id: postId, status: post.status },
+    data: {
+      status: "generating_script",
+      error: null,
+      autoSend: true,
+      scheduledAt: new Date(),
+    },
+  });
+  if (count === 0) return false;
+
+  await runClaimedVideoPost(postId);
+  return true;
+}
+
+/**
+ * Processa um post que já foi reivindicado (status gerando...).
+ * Usado pelo send-now via `after()` — sem novo claim.
+ */
+export async function runClaimedVideoPost(postId: string): Promise<void> {
+  try {
+    await processPost(postId);
+  } catch (err) {
+    await markFailed(postId, err);
+  }
+}
+
 /** Um tick do worker: reivindica e processa postagens vencidas. */
 export async function processDueVideoPosts(): Promise<void> {
   const now = new Date();
-
-  // Candidatos: agendados com envio automático já vencidos, ou postagens
-  // presas em status intermediário há mais de 15 min (retomada).
-  const staleBefore = new Date(now.getTime() - 15 * 60_000);
+  const staleBefore = new Date(now.getTime() - STALE_MS);
   const candidates = await prisma.videoPost.findMany({
     where: {
       autoSend: true,
@@ -51,20 +121,15 @@ export async function processDueVideoPosts(): Promise<void> {
     try {
       await processPost(candidate.id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[video-worker] post ${candidate.id} falhou:`, message);
-      await prisma.videoPost
-        .update({
-          where: { id: candidate.id },
-          data: { status: "failed", error: message },
-        })
-        .catch(() => {});
+      await markFailed(candidate.id, err);
     }
   }
 }
 
 /** Executa o pipeline completo para uma postagem (retomável por etapa). */
 async function processPost(postId: string): Promise<void> {
+  await assertPipelineReady();
+
   const post = await prisma.videoPost.findUnique({
     where: { id: postId },
     include: {

@@ -1,20 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/api";
-import { processDueVideoPosts } from "@/lib/video-pipeline/worker";
-
-// Status em que o pipeline já está trabalhando no post.
-const IN_PROGRESS_STATUSES = [
-  "generating_script",
-  "script_ready",
-  "generating_assets",
-  "assembling",
-  "sending",
-];
+import {
+  runClaimedVideoPost,
+  RESUMABLE_STATUSES,
+} from "@/lib/video-pipeline/worker";
 
 /**
- * "Enviar agora": antecipa o agendamento para já e dispara o worker em
- * background, sem esperar o tick de 60s. Útil para testar o fluxo completo.
+ * "Enviar agora": reivindica a postagem e dispara o pipeline.
+ *
+ * Usa `after()` do Next.js para continuar o trabalho depois da resposta HTTP
+ * (no Azure, um `void promise` solto costuma ser morto e o status fica preso
+ * em "gerando..." sem nunca gravar o erro).
+ *
+ * O modal NÃO precisa ficar aberto — o processamento é no servidor.
  */
 export async function POST(
   _req: NextRequest,
@@ -33,28 +32,44 @@ export async function POST(
       { status: 404 }
     );
   }
-  if (IN_PROGRESS_STATUSES.includes(post.status)) {
+
+  // Se já está processando "agora" (updatedAt recente), não reinicia.
+  const recentlyTouched =
+    Date.now() - new Date(post.updatedAt).getTime() < 90_000;
+  if (RESUMABLE_STATUSES.includes(post.status) && recentlyTouched) {
     return NextResponse.json(
-      { error: "Esta postagem já está sendo processada" },
+      {
+        error:
+          "Esta postagem já está sendo processada. Acompanhe o status neste modal (atualiza sozinho).",
+        post,
+      },
       { status: 409 }
     );
   }
 
-  const updated = await prisma.videoPost.update({
-    where: { id: post.id },
+  // Claim imediato: a UI já recebe "generating_script" na resposta.
+  const { count } = await prisma.videoPost.updateMany({
+    where: { id: post.id, status: post.status },
     data: {
       scheduledAt: new Date(),
       autoSend: true,
-      status: "scheduled",
+      status: "generating_script",
       error: null,
     },
   });
+  if (count === 0) {
+    return NextResponse.json(
+      { error: "Não foi possível iniciar o processamento (conflito de status)." },
+      { status: 409 }
+    );
+  }
 
-  // Dispara o worker sem bloquear a resposta; o claim atômico evita
-  // processamento duplicado caso o tick de 60s rode ao mesmo tempo.
-  void processDueVideoPosts().catch((err) =>
-    console.error("[video-worker] erro no envio imediato:", err)
-  );
+  const updated = await prisma.videoPost.findUnique({ where: { id: post.id } });
+
+  // Continua depois da resposta — o modal NÃO precisa ficar aberto.
+  after(async () => {
+    await runClaimedVideoPost(id);
+  });
 
   return NextResponse.json(updated);
 }
