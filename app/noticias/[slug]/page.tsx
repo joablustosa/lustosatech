@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
+import { DEFAULT_TENANT_ID } from "@/lib/tenant";
 import { renderMarkdown } from "@/lib/markdown";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -23,7 +24,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const news = await prisma.news.findUnique({ where: { slug } });
+  const news = await prisma.news.findUnique({
+    where: { tenantId_slug: { tenantId: DEFAULT_TENANT_ID, slug } },
+  });
   if (!news) return { title: "Notícia não encontrada" };
   const image = news.coverImageUrl || "/og.png";
   return {
@@ -57,7 +60,9 @@ export default async function ArticlePage({
 }) {
   const { slug } = await params;
   const [news, companyName] = await Promise.all([
-    prisma.news.findUnique({ where: { slug } }),
+    prisma.news.findUnique({
+      where: { tenantId_slug: { tenantId: DEFAULT_TENANT_ID, slug } },
+    }),
     getSetting("companyName"),
   ]);
 

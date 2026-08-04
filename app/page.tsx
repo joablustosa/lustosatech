@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Newspaper, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
+import { DEFAULT_TENANT_ID } from "@/lib/tenant";
 import { NewsPortal, PortalNews } from "@/components/news-portal";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -13,7 +14,7 @@ export default async function Home() {
   const [companyName, news] = await Promise.all([
     getSetting("companyName"),
     prisma.news.findMany({
-      where: { status: "published" },
+      where: { tenantId: DEFAULT_TENANT_ID, status: "published" },
       orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
       take: 100,
     }),

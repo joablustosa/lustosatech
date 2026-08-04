@@ -7,29 +7,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Tenant (empresa/conta). Todo dado do admin pertence a um tenant.
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  users             AdminUser[]
+  documents         Document[]
+  conversations     Conversation[]
+  availabilitySlots AvailabilitySlot[]
+  meetings          Meeting[]
+  settings          Setting[]
+  news              News[]
+  videoPosts        VideoPost[]
+  videoScripts      VideoScript[]
+  videoPrompts      VideoPrompt[]
+}
+
 model AdminUser {
   id           String   @id @default(cuid())
-  email        String   @unique
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String
   name         String?
   passwordHash String
+  role         String   @default("member") // admin | member
+  active       Boolean  @default(true)
   createdAt    DateTime @default(now())
+
+  @@unique([tenantId, email])
+  @@index([email])
 }
 
 /// Base de conhecimento: documentos .md sobre a empresa
 model Document {
   id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   title     String
   filename  String?
   content   String   @db.Text
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 /// Uma conversa por contato de WhatsApp
 model Conversation {
   id            String    @id @default(cuid())
-  waPhone       String    @unique
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  waPhone       String
   contactName   String?
   status        String    @default("ativo") // ativo | agendado | fechado
   reportJson    String?   @db.Text // relatório gerado por IA (JSON)
@@ -38,6 +70,9 @@ model Conversation {
   createdAt     DateTime  @default(now())
   messages      Message[]
   meetings      Meeting[]
+
+  @@unique([tenantId, waPhone])
+  @@index([tenantId])
 }
 
 model Message {
@@ -54,39 +89,53 @@ model Message {
 }
 
 model AvailabilitySlot {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   startsAt  DateTime
   endsAt    DateTime
-  isBooked  Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  isBooked  Boolean  @default(false)
+  createdAt DateTime @default(now())
   meeting   Meeting?
+
+  @@index([tenantId])
 }
 
 model Meeting {
-  id             String            @id @default(cuid())
+  id             String           @id @default(cuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversationId String?
-  conversation   Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  slotId         String            @unique
-  slot           AvailabilitySlot  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  conversation   Conversation?    @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  slotId         String           @unique
+  slot           AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
   clientName     String
   clientPhone    String?
   clientEmail    String?
-  notes          String?           @db.Text
-  status         String            @default("confirmado") // confirmado | cancelado | realizado
-  createdAt      DateTime          @default(now())
+  notes          String?          @db.Text
+  status         String           @default("confirmado") // confirmado | cancelado | realizado
+  createdAt      DateTime         @default(now())
+
+  @@index([tenantId])
 }
 
-/// Configurações (chave/valor). Segredos podem vir daqui ou do .env.
+/// Configurações (chave/valor) por tenant. Segredos podem vir daqui ou do .env.
 model Setting {
-  key   String @id
-  value String @db.Text
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key      String
+  value    String @db.Text
+
+  @@id([tenantId, key])
 }
 
 /// Notícias do portal de IA
 model News {
   id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   title         String
-  slug          String   @unique
+  slug          String
   category      String   @default("Novidades") // Novidades | Pesquisa | Produto | Política | Opinião | Mercado
   excerpt       String   @db.Text // resumo curto exibido nos cards
   content       String   @db.Text // corpo em markdown
@@ -103,26 +152,77 @@ model News {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  @@unique([tenantId, slug])
   @@index([status, publishedAt])
   @@index([category])
+  @@index([tenantId])
 }
 
 /// Agendamento de postagens de vídeo (calendário editorial)
 model VideoPost {
-  id                 String   @id @default(cuid())
-  title              String
-  prompt             String   @db.Text // prompt do roteiro
-  accountName        String // conta que fará a postagem
-  scheduledAt        DateTime
-  platformInstagram  Boolean  @default(false)
-  platformYoutube    Boolean  @default(false)
-  platformTiktok     Boolean  @default(false)
-  platformKwai       Boolean  @default(false)
-  autoSend           Boolean  @default(false)
-  status             String   @default("scheduled") // draft | scheduled | published | failed
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title             String
+  prompt            String   @db.Text // prompt do roteiro
+  accountName       String // conta que fará a postagem
+  scheduledAt       DateTime
+  platformInstagram Boolean  @default(false)
+  platformYoutube   Boolean  @default(false)
+  platformTiktok    Boolean  @default(false)
+  platformKwai      Boolean  @default(false)
+  autoSend          Boolean  @default(false)
+  voiceId           String? // voz do ElevenLabs para a narração deste vídeo (null = padrão)
+  // Fluxo do pipeline: draft | scheduled | generating_script | script_ready |
+  // generating_assets | assembling | sending | sent | failed
+  status            String   @default("scheduled")
+  finalVideoUrl     String? // vídeo final montado (Azure Blob)
+  error             String?  @db.Text // último erro do pipeline
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  script VideoScript?
 
   @@index([scheduledAt])
   @@index([status])
+  @@index([tenantId])
+}
+
+/// Roteiro gerado por IA para uma postagem de vídeo (até ~1h de conteúdo)
+model VideoScript {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  videoPostId String   @unique
+  videoPost   VideoPost @relation(fields: [videoPostId], references: [id], onDelete: Cascade)
+  content     String   @db.LongText // roteiro completo (campo grande)
+  status      String   @default("ready") // ready | failed
+  error       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prompts VideoPrompt[]
+
+  @@index([tenantId])
+}
+
+/// Prompts de vídeo: roteiro dividido em cenas sequenciais para geração
+model VideoPrompt {
+  id        String      @id @default(cuid())
+  tenantId  String
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  scriptId  String
+  script    VideoScript @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  sequence  Int // ordem da cena no vídeo final
+  prompt    String      @db.Text // prompt visual da cena (Gemini/Veo)
+  narration String?     @db.Text // texto de narração da cena (ElevenLabs)
+  videoUrl  String? // clipe gerado (Azure Blob)
+  audioUrl  String? // narração gerada (Azure Blob)
+  status    String      @default("pending") // pending | video_done | audio_done | done | failed
+  error     String?     @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([scriptId, sequence])
+  @@index([tenantId])
 }

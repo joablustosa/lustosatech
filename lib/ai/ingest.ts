@@ -2,6 +2,7 @@ import { prisma } from "../db";
 import { describeImage, transcribeAudio } from "../openai";
 import { downloadWhatsappMedia, sendWhatsappText } from "../whatsapp";
 import { generateReply } from "./agent";
+import { DEFAULT_TENANT_ID } from "../tenant";
 
 export interface IncomingMessage {
   waPhone: string;
@@ -37,9 +38,10 @@ async function getMediaBuffer(
  */
 export async function processIncomingMessage(
   msg: IncomingMessage,
-  options: { sendReply?: boolean } = {}
+  options: { sendReply?: boolean; tenantId?: string } = {}
 ): Promise<{ reply: string; conversationId: string; understood: string }> {
   const sendReply = options.sendReply ?? true;
+  const tenantId = options.tenantId ?? DEFAULT_TENANT_ID;
 
   // 1) Interpreta o conteúdo conforme o tipo
   let content = msg.text || "";
@@ -61,14 +63,15 @@ export async function processIncomingMessage(
 
   if (!content) content = "(mensagem vazia)";
 
-  // 2) Conversa (upsert por telefone)
+  // 2) Conversa (upsert por telefone, dentro do tenant)
   const conversation = await prisma.conversation.upsert({
-    where: { waPhone: msg.waPhone },
+    where: { tenantId_waPhone: { tenantId, waPhone: msg.waPhone } },
     update: {
       lastMessageAt: new Date(),
       ...(msg.contactName ? { contactName: msg.contactName } : {}),
     },
     create: {
+      tenantId,
       waPhone: msg.waPhone,
       contactName: msg.contactName,
       lastMessageAt: new Date(),

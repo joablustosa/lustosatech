@@ -1,11 +1,14 @@
 import OpenAI from "openai";
-import { getSetting } from "./settings";
 
+/**
+ * A chave da OpenAI é sempre da empresa (env), nunca por tenant — o consumo
+ * das IAs é cobrado de forma centralizada.
+ */
 export async function getOpenAI(): Promise<OpenAI> {
-  const apiKey = await getSetting("openaiApiKey");
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "Chave da OpenAI não configurada. Defina em Configurações ou no .env (OPENAI_API_KEY)."
+      "Chave da OpenAI não configurada. Defina OPENAI_API_KEY no .env."
     );
   }
   return new OpenAI({ apiKey });

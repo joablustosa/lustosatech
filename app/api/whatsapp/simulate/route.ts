@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 import { processIncomingMessage } from "@/lib/ai/ingest";
 
 const schema = z.object({
@@ -18,8 +18,8 @@ const schema = z.object({
  * Não envia nada para o WhatsApp real.
  */
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) {
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await processIncomingMessage(parsed.data, {
       sendReply: false,
+      tenantId: s.tenantId,
     });
     return NextResponse.json(result);
   } catch (err) {

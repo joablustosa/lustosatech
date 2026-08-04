@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 import { uploadToBlob } from "@/lib/blob";
 
 export const dynamic = "force-dynamic";
@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   try {
     const form = await req.formData();

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { uniqueSlug, hasValidApiKey } from "@/lib/news";
+import { DEFAULT_TENANT_ID } from "@/lib/tenant";
 import {
   MEDIA_TYPES,
   NEWS_STATUS,
@@ -45,9 +46,12 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   const isAdmin = !!session?.user;
   const wantAll = p.get("all") === "1" && isAdmin;
+  // Logado vê as notícias do próprio tenant; público vê o tenant padrão.
+  const tenantId = session?.user?.tenantId || DEFAULT_TENANT_ID;
 
   const news = await prisma.news.findMany({
     where: {
+      tenantId,
       ...(wantAll ? {} : { status: "published" }),
       ...(category ? { category } : {}),
       ...(slug ? { slug } : {}),
@@ -80,10 +84,13 @@ export async function POST(req: NextRequest) {
   }
   const d = parsed.data;
 
-  const slug = await uniqueSlug(d.slug || d.title);
+  // Sessão usa o tenant do usuário; agente via x-api-key publica no tenant padrão.
+  const tenantId = session?.user?.tenantId || DEFAULT_TENANT_ID;
+  const slug = await uniqueSlug(tenantId, d.slug || d.title);
 
   const news = await prisma.news.create({
     data: {
+      tenantId,
       title: d.title,
       slug,
       category: d.category ?? "Novidades",

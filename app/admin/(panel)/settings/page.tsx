@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Check, KeyRound, Bot, MessageCircle, Newspaper } from "lucide-react";
+import {
+  Save,
+  Check,
+  KeyRound,
+  Bot,
+  MessageCircle,
+  Newspaper,
+  Clapperboard,
+  Share2,
+} from "lucide-react";
 
 type Values = Record<string, string>;
 type Secrets = Record<string, boolean>;
@@ -49,9 +58,12 @@ export default function SettingsPage() {
       // limpa campos de segredo do formulário
       setValues((prev) => ({
         ...prev,
-        openaiApiKey: "",
         whatsappAccessToken: "",
         newsApiKey: "",
+        instagramPassword: "",
+        youtubePassword: "",
+        tiktokPassword: "",
+        kwaiPassword: "",
         whatsappVerifyToken: prev.whatsappVerifyToken,
       }));
     }
@@ -91,20 +103,6 @@ export default function SettingsPage() {
             placeholder="Como a IA deve se comportar, tom de voz, regras..."
           />
         </div>
-        <div>
-          <label className="label">Chave da OpenAI (sk-...)</label>
-          <input
-            className="input font-mono"
-            type="password"
-            value={values.openaiApiKey || ""}
-            onChange={(e) => set("openaiApiKey", e.target.value)}
-            placeholder={
-              secretsSet.openaiApiKey
-                ? "•••••••• (configurada — deixe em branco para manter)"
-                : "sk-..."
-            }
-          />
-        </div>
       </section>
 
       {/* Automação de notícias */}
@@ -134,6 +132,83 @@ export default function SettingsPage() {
             reiniciar o app.
           </p>
         </div>
+      </section>
+
+      {/* Pipeline de vídeo */}
+      <section className="card space-y-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Clapperboard size={18} className="text-brand-600" /> Pipeline de
+          vídeo (postagens)
+        </h2>
+        <div>
+          <label className="label">
+            Webhook de entrega do vídeo final (opcional)
+          </label>
+          <input
+            className="input"
+            value={values.videoWebhookUrl || ""}
+            onChange={(e) => set("videoWebhookUrl", e.target.value)}
+            placeholder="https://sua-api.com/webhook/videos"
+          />
+          <p className="mt-1.5 text-xs muted">
+            O worker envia um <code>POST</code> JSON com a URL do vídeo final,
+            título, conta, plataformas e credenciais das redes marcadas quando
+            o vídeo fica pronto. Se ficar em branco, o vídeo permanece
+            disponível no Azure Blob (link no modal da postagem).
+          </p>
+        </div>
+        <p className="text-xs muted">
+          As chaves das IAs (OpenAI, Gemini, ElevenLabs) são da plataforma e
+          configuradas via variáveis de ambiente — não é necessário informar
+          nada aqui.
+        </p>
+      </section>
+
+      {/* Contas de redes sociais */}
+      <section className="card space-y-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Share2 size={18} className="text-brand-600" /> Contas de redes
+          sociais
+        </h2>
+        <p className="text-xs muted">
+          Credenciais das contas onde os vídeos serão publicados. Elas são
+          enviadas junto com o vídeo final no webhook de entrega, apenas para
+          as plataformas marcadas em cada postagem.
+        </p>
+        {(
+          [
+            ["Instagram", "instagramUser", "instagramPassword"],
+            ["YouTube", "youtubeUser", "youtubePassword"],
+            ["TikTok", "tiktokUser", "tiktokPassword"],
+            ["Kwai", "kwaiUser", "kwaiPassword"],
+          ] as const
+        ).map(([label, userKey, passKey]) => (
+          <div key={userKey} className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">{label} — usuário</label>
+              <input
+                className="input"
+                value={values[userKey] || ""}
+                onChange={(e) => set(userKey, e.target.value)}
+                placeholder="usuario ou e-mail"
+              />
+            </div>
+            <div>
+              <label className="label">{label} — senha</label>
+              <input
+                className="input font-mono"
+                type="password"
+                value={values[passKey] || ""}
+                onChange={(e) => set(passKey, e.target.value)}
+                placeholder={
+                  secretsSet[passKey]
+                    ? "•••••••• (configurada — deixe em branco para manter)"
+                    : "senha"
+                }
+              />
+            </div>
+          </div>
+        ))}
       </section>
 
       {/* WhatsApp */}

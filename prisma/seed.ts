@@ -5,7 +5,21 @@ const { PrismaClient } = pkg;
 
 const prisma = new PrismaClient();
 
+const DEFAULT_TENANT_ID = "tenant_default";
+
 async function main() {
+  // Tenant padrão (recebe todos os dados públicos do site)
+  const tenant = await prisma.tenant.upsert({
+    where: { id: DEFAULT_TENANT_ID },
+    update: {},
+    create: {
+      id: DEFAULT_TENANT_ID,
+      name: "Lustosa Tech",
+      slug: "lustosa-tech",
+    },
+  });
+  console.log(`✔ Tenant padrão pronto: ${tenant.name}`);
+
   const email = process.env.ADMIN_EMAIL || "joab@lustosa.tech";
   const password = process.env.ADMIN_PASSWORD || "0bgmtfs0";
   const name = process.env.ADMIN_NAME || "Joab";
@@ -13,17 +27,27 @@ async function main() {
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.adminUser.upsert({
-    where: { email },
-    update: { passwordHash, name },
-    create: { email, passwordHash, name },
+    where: { tenantId_email: { tenantId: tenant.id, email } },
+    update: { passwordHash, name, role: "admin", active: true },
+    create: {
+      tenantId: tenant.id,
+      email,
+      passwordHash,
+      name,
+      role: "admin",
+      active: true,
+    },
   });
   console.log(`✔ Admin pronto: ${email} (senha: ${password})`);
 
   // Documento de exemplo
-  const exampleDocCount = await prisma.document.count();
+  const exampleDocCount = await prisma.document.count({
+    where: { tenantId: tenant.id },
+  });
   if (exampleDocCount === 0) {
     await prisma.document.create({
       data: {
+        tenantId: tenant.id,
         title: "Sobre a Empresa (exemplo)",
         filename: "sobre.md",
         content: `# Sobre a nossa empresa
@@ -67,18 +91,20 @@ Para falar com um especialista, agende uma reunião pelo nosso link.`,
   };
   for (const [key, value] of Object.entries(defaults)) {
     await prisma.setting.upsert({
-      where: { key },
-      update: key === "bookingBaseUrl" ? {} : {},
-      create: { key, value },
+      where: { tenantId_key: { tenantId: tenant.id, key } },
+      update: {},
+      create: { tenantId: tenant.id, key, value },
     });
   }
   console.log("✔ Configurações padrão prontas");
 
   // Slots de exemplo (próximos dias úteis, 10h e 14h)
-  const slotCount = await prisma.availabilitySlot.count();
+  const slotCount = await prisma.availabilitySlot.count({
+    where: { tenantId: tenant.id },
+  });
   if (slotCount === 0) {
     const now = new Date();
-    const slots: { startsAt: Date; endsAt: Date }[] = [];
+    const slots: { tenantId: string; startsAt: Date; endsAt: Date }[] = [];
     let added = 0;
     let day = 1;
     while (added < 6) {
@@ -91,7 +117,7 @@ Para falar com um especialista, agende uma reunião pelo nosso link.`,
           start.setHours(hour, 0, 0, 0);
           const end = new Date(start);
           end.setMinutes(30);
-          slots.push({ startsAt: start, endsAt: end });
+          slots.push({ tenantId: tenant.id, startsAt: start, endsAt: end });
           added++;
         }
       }

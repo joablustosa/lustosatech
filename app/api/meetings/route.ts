@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { DEFAULT_TENANT_ID } from "@/lib/tenant";
 
 const bookSchema = z.object({
   slotId: z.string().min(1),
@@ -39,7 +40,10 @@ export async function POST(req: NextRequest) {
         const digits = clientPhone.replace(/\D/g, "");
         if (digits) {
           const convo = await tx.conversation.findFirst({
-            where: { waPhone: { contains: digits.slice(-8) } },
+            where: {
+              tenantId: slot.tenantId,
+              waPhone: { contains: digits.slice(-8) },
+            },
           });
           if (convo) {
             conversationId = convo.id;
@@ -53,6 +57,7 @@ export async function POST(req: NextRequest) {
 
       return tx.meeting.create({
         data: {
+          tenantId: slot.tenantId ?? DEFAULT_TENANT_ID,
           slotId,
           clientName,
           clientEmail: clientEmail || null,

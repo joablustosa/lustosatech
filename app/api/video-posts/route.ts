@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 
 const createSchema = z
   .object({
@@ -14,6 +14,7 @@ const createSchema = z
     platformTiktok: z.boolean().optional(),
     platformKwai: z.boolean().optional(),
     autoSend: z.boolean().optional(),
+    voiceId: z.string().max(191).optional().nullable(),
     status: z.enum(["draft", "scheduled", "published", "failed"]).optional(),
   })
   .refine(
@@ -26,33 +27,28 @@ const createSchema = z
   );
 
 export async function GET(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const { searchParams } = req.nextUrl;
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const where =
-    from && to
-      ? {
-          scheduledAt: {
-            gte: new Date(from),
-            lte: new Date(to),
-          },
-        }
-      : undefined;
-
   const posts = await prisma.videoPost.findMany({
-    where,
+    where: {
+      tenantId: s.tenantId,
+      ...(from && to
+        ? { scheduledAt: { gte: new Date(from), lte: new Date(to) } }
+        : {}),
+    },
     orderBy: { scheduledAt: "asc" },
   });
   return NextResponse.json(posts);
 }
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
@@ -72,6 +68,7 @@ export async function POST(req: NextRequest) {
   const post = await prisma.videoPost.create({
     data: {
       ...rest,
+      tenantId: s.tenantId,
       scheduledAt: date,
       status: rest.status ?? "scheduled",
     },

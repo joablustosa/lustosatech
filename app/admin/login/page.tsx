@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { MessageCircle, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,6 +74,12 @@ export default function LoginPage() {
             <LogIn size={16} />
             {loading ? "Entrando..." : "Entrar"}
           </button>
+          <p className="text-center text-sm muted">
+            Não tem conta?{" "}
+            <Link href="/admin/register" className="font-medium text-brand-600 hover:underline">
+              Criar conta
+            </Link>
+          </p>
         </form>
       </div>
     </main>

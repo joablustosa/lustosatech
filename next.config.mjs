@@ -3,6 +3,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Pacotes com binários/caminhos nativos não podem ser empacotados pelo
+  // bundler do servidor (o worker de vídeo usa o ffmpeg via caminho real).
+  serverExternalPackages: ["fluent-ffmpeg", "ffmpeg-static", "@google/genai"],
   typescript: {
     // Erros de tipo não bloqueiam o build de produção; o dev server continua reportando.
     ignoreBuildErrors: false,

@@ -15,6 +15,7 @@ export const authConfig = {
       const { pathname } = request.nextUrl;
       const isLoggedIn = !!auth?.user;
       if (pathname.startsWith("/admin/login")) return true;
+      if (pathname.startsWith("/admin/register")) return true;
       if (pathname.startsWith("/admin")) return isLoggedIn;
       return true;
     },

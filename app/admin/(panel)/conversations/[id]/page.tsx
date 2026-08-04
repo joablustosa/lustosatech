@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Mic, Image as ImageIcon, CalendarCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { formatDateTime, formatTime } from "@/lib/utils";
 import { ReportPanel } from "@/components/report-panel";
 import type { ConversationReport } from "@/lib/ai/report";
@@ -14,8 +15,9 @@ export default async function ConversationDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const conversation = await prisma.conversation.findUnique({
-    where: { id },
+  const session = await auth();
+  const conversation = await prisma.conversation.findFirst({
+    where: { id, tenantId: session!.user.tenantId },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       meetings: { include: { slot: true } },

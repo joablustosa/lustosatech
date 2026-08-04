@@ -7,13 +7,16 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { formatDateTime } from "@/lib/utils";
 import { isWhatsappConfigured } from "@/lib/whatsapp";
-import { getSetting } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
+  const session = await auth();
+  const tenantId = session!.user.tenantId;
+
   const [
     conversationCount,
     meetingCount,
@@ -21,25 +24,30 @@ export default async function Dashboard() {
     recentConversations,
     upcomingMeetings,
     waOk,
-    openaiKey,
   ] = await Promise.all([
-    prisma.conversation.count(),
-    prisma.meeting.count({ where: { status: "confirmado" } }),
-    prisma.document.count({ where: { enabled: true } }),
+    prisma.conversation.count({ where: { tenantId } }),
+    prisma.meeting.count({ where: { tenantId, status: "confirmado" } }),
+    prisma.document.count({ where: { tenantId, enabled: true } }),
     prisma.conversation.findMany({
+      where: { tenantId },
       orderBy: { lastMessageAt: "desc" },
       take: 5,
     }),
     prisma.meeting.findMany({
-      where: { status: "confirmado", slot: { startsAt: { gte: new Date() } } },
+      where: {
+        tenantId,
+        status: "confirmado",
+        slot: { startsAt: { gte: new Date() } },
+      },
       include: { slot: true },
       orderBy: { slot: { startsAt: "asc" } },
       take: 5,
     }),
     isWhatsappConfigured(),
-    getSetting("openaiApiKey"),
   ]);
 
+  // Chave da OpenAI é da empresa (env), não é configurada por tenant.
+  const openaiKey = Boolean(process.env.OPENAI_API_KEY);
   const setupPending = !waOk || !openaiKey;
 
   return (
@@ -59,7 +67,7 @@ export default async function Dashboard() {
               Configuração pendente
             </p>
             <p className="text-amber-700 dark:text-amber-400">
-              {!openaiKey && "Falta a chave da OpenAI. "}
+              {!openaiKey && "Falta a chave da OpenAI (env OPENAI_API_KEY). "}
               {!waOk && "Falta configurar o WhatsApp. "}
               Clique para configurar.
             </p>

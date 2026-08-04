@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { PRODUCTS } from "@/lib/products";
 import { prisma } from "@/lib/db";
+import { DEFAULT_TENANT_ID } from "@/lib/tenant";
 
 // Evita pré-render estático no build (CI sem DATABASE_URL).
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ async function getPublishedNews() {
 
   try {
     return await prisma.news.findMany({
-      where: { status: "published" },
+      where: { tenantId: DEFAULT_TENANT_ID, status: "published" },
       select: { slug: true, updatedAt: true, publishedAt: true },
       orderBy: { publishedAt: "desc" },
       take: 500,

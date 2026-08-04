@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 import { SECRET_KEYS, setSetting } from "@/lib/settings";
 
 const ALLOWED_KEYS = [
   "companyName",
   "aiPersona",
-  "openaiApiKey",
   "whatsappAccessToken",
   "whatsappPhoneNumberId",
   "whatsappVerifyToken",
@@ -16,13 +15,25 @@ const ALLOWED_KEYS = [
   // Fica aqui para poder ser definida pela tela, sem depender de variável de
   // ambiente (que exige reiniciar o App Service).
   "newsApiKey",
+  // URL que recebe o vídeo final gerado pelo pipeline (webhook de entrega).
+  "videoWebhookUrl",
+  // Contas de redes sociais do tenant (dados do cliente, enviados no webhook
+  // para a API de publicação). As chaves das IAs NÃO ficam aqui: são env.
+  "instagramUser",
+  "instagramPassword",
+  "youtubeUser",
+  "youtubePassword",
+  "tiktokUser",
+  "tiktokPassword",
+  "kwaiUser",
+  "kwaiPassword",
 ];
 
 export async function GET() {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
-  const rows = await prisma.setting.findMany();
+  const rows = await prisma.setting.findMany({ where: { tenantId: s.tenantId } });
   const values: Record<string, string> = {};
   for (const r of rows) values[r.key] = r.value;
 
@@ -37,8 +48,8 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const body = (await req.json()) as Record<string, unknown>;
 
@@ -48,7 +59,7 @@ export async function PUT(req: NextRequest) {
     if (typeof value !== "string") continue;
     // Para segredos, string vazia significa "não alterar".
     if (SECRET_KEYS.has(key) && value.trim() === "") continue;
-    await setSetting(key, value);
+    await setSetting(s.tenantId, key, value);
   }
 
   return NextResponse.json({ ok: true });

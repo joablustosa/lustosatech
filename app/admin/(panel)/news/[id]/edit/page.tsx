@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { NewsForm, NewsData } from "@/components/news-form";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,10 @@ export default async function EditNewsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const news = await prisma.news.findUnique({ where: { id } });
+  const session = await auth();
+  const news = await prisma.news.findFirst({
+    where: { id, tenantId: session!.user.tenantId },
+  });
   if (!news) notFound();
 
   const initial: NewsData = {

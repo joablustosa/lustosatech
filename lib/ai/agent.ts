@@ -9,14 +9,15 @@ const MAX_DOC_CHARS = 40000; // guarda simples de contexto
 
 type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
-async function buildSystemPrompt(): Promise<string> {
-  const companyName = (await getSetting("companyName")) || "nossa empresa";
+async function buildSystemPrompt(tenantId: string): Promise<string> {
+  const companyName =
+    (await getSetting("companyName", tenantId)) || "nossa empresa";
   const persona =
-    (await getSetting("aiPersona")) ||
+    (await getSetting("aiPersona", tenantId)) ||
     "Você é um assistente de atendimento simpático e objetivo.";
 
   const docs = await prisma.document.findMany({
-    where: { enabled: true },
+    where: { tenantId, enabled: true },
     orderBy: { createdAt: "asc" },
   });
 
@@ -67,10 +68,10 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   },
 ];
 
-async function runSchedulingTool(): Promise<string> {
-  const baseUrl = await getBaseUrl();
+async function runSchedulingTool(tenantId: string): Promise<string> {
+  const baseUrl = await getBaseUrl(tenantId);
   const slots = await prisma.availabilitySlot.findMany({
-    where: { isBooked: false, startsAt: { gte: new Date() } },
+    where: { tenantId, isBooked: false, startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
     take: 3,
   });
@@ -94,6 +95,13 @@ async function runSchedulingTool(): Promise<string> {
  * (incluindo transcrições de áudio e descrições de imagem já persistidas).
  */
 export async function generateReply(conversationId: string): Promise<string> {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { tenantId: true },
+  });
+  if (!conversation) throw new Error("Conversa não encontrada");
+  const tenantId = conversation.tenantId;
+
   const client = await getOpenAI();
 
   const history = await prisma.message.findMany({
@@ -102,7 +110,7 @@ export async function generateReply(conversationId: string): Promise<string> {
     take: MAX_HISTORY,
   });
 
-  const systemPrompt = await buildSystemPrompt();
+  const systemPrompt = await buildSystemPrompt(tenantId);
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
@@ -138,7 +146,7 @@ export async function generateReply(conversationId: string): Promise<string> {
   for (const call of choice.tool_calls) {
     let result = "{}";
     if (call.type === "function" && call.function.name === "oferecer_agendamento") {
-      result = await runSchedulingTool();
+      result = await runSchedulingTool(tenantId);
     }
     messages.push({
       role: "tool",

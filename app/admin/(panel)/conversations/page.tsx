@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MessagesSquare, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { formatDateTime } from "@/lib/utils";
 import { SimulatorCard } from "@/components/simulator-card";
 
@@ -14,7 +15,9 @@ const statusStyle: Record<string, string> = {
 };
 
 export default async function ConversationsPage() {
+  const session = await auth();
   const conversations = await prisma.conversation.findMany({
+    where: { tenantId: session!.user.tenantId },
     orderBy: { lastMessageAt: "desc" },
     include: { _count: { select: { messages: true } } },
   });

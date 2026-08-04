@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 
 const patchSchema = z.object({
   title: z.string().min(1).optional(),
@@ -13,6 +13,7 @@ const patchSchema = z.object({
   platformTiktok: z.boolean().optional(),
   platformKwai: z.boolean().optional(),
   autoSend: z.boolean().optional(),
+  voiceId: z.string().max(191).optional().nullable(),
   status: z.enum(["draft", "scheduled", "published", "failed"]).optional(),
 });
 
@@ -20,11 +21,18 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const { id } = await params;
-  const post = await prisma.videoPost.findUnique({ where: { id } });
+  const post = await prisma.videoPost.findFirst({
+    where: { id, tenantId: s.tenantId },
+    include: {
+      script: {
+        include: { prompts: { orderBy: { sequence: "asc" } } },
+      },
+    },
+  });
   if (!post) {
     return NextResponse.json({ error: "Postagem não encontrada" }, { status: 404 });
   }
@@ -35,8 +43,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const { id } = await params;
   const body = await req.json();
@@ -59,6 +67,7 @@ export async function PATCH(
     platformTiktok?: boolean;
     platformKwai?: boolean;
     autoSend?: boolean;
+    voiceId?: string | null;
     status?: string;
   } = { ...rest };
 
@@ -70,7 +79,9 @@ export async function PATCH(
     data.scheduledAt = date;
   }
 
-  const existing = await prisma.videoPost.findUnique({ where: { id } });
+  const existing = await prisma.videoPost.findFirst({
+    where: { id, tenantId: s.tenantId },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Postagem não encontrada" }, { status: 404 });
   }
@@ -105,10 +116,15 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const { id } = await params;
-  await prisma.videoPost.delete({ where: { id } });
+  const { count } = await prisma.videoPost.deleteMany({
+    where: { id, tenantId: s.tenantId },
+  });
+  if (count === 0) {
+    return NextResponse.json({ error: "Postagem não encontrada" }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }

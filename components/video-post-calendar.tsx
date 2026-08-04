@@ -11,6 +11,10 @@ import {
   Instagram,
   Youtube,
   Send,
+  Loader2,
+  Film,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 
@@ -25,8 +29,56 @@ export interface VideoPost {
   platformTiktok: boolean;
   platformKwai: boolean;
   autoSend: boolean;
+  voiceId?: string | null;
+  status: string;
+  finalVideoUrl?: string | null;
+  error?: string | null;
+}
+
+interface Voice {
+  id: string;
+  name: string;
+  language?: string;
+}
+
+interface VideoPromptDetail {
+  id: string;
+  sequence: number;
+  prompt: string;
+  narration: string | null;
+  videoUrl: string | null;
+  audioUrl: string | null;
   status: string;
 }
+
+interface VideoPostDetail extends VideoPost {
+  script?: {
+    id: string;
+    content: string;
+    prompts: VideoPromptDetail[];
+  } | null;
+}
+
+const STATUS_LABELS: Record<string, { label: string; className: string }> = {
+  draft: { label: "Rascunho", className: "bg-black/10 text-current dark:bg-white/10" },
+  scheduled: { label: "Agendado", className: "bg-brand-600/10 text-brand-600" },
+  generating_script: { label: "Gerando roteiro...", className: "bg-amber-500/15 text-amber-600" },
+  script_ready: { label: "Roteiro pronto", className: "bg-amber-500/15 text-amber-600" },
+  generating_assets: { label: "Gerando vídeos e áudio...", className: "bg-amber-500/15 text-amber-600" },
+  assembling: { label: "Montando vídeo...", className: "bg-amber-500/15 text-amber-600" },
+  sending: { label: "Enviando...", className: "bg-amber-500/15 text-amber-600" },
+  sent: { label: "Enviado", className: "bg-emerald-500/15 text-emerald-600" },
+  published: { label: "Publicado", className: "bg-emerald-500/15 text-emerald-600" },
+  failed: { label: "Falhou", className: "bg-red-500/15 text-red-600" },
+};
+
+const IN_PROGRESS_STATUSES = new Set([
+  "generating_script",
+  "script_ready",
+  "generating_assets",
+  "assembling",
+  "sending",
+]);
 
 type FormState = {
   title: string;
@@ -39,6 +91,7 @@ type FormState = {
   platformTiktok: boolean;
   platformKwai: boolean;
   autoSend: boolean;
+  voiceId: string;
 };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -103,6 +156,7 @@ function emptyForm(day?: Date): FormState {
     platformTiktok: false,
     platformKwai: false,
     autoSend: false,
+    voiceId: "",
   };
 }
 
@@ -119,6 +173,7 @@ function formFromPost(post: VideoPost): FormState {
     platformTiktok: post.platformTiktok,
     platformKwai: post.platformKwai,
     autoSend: post.autoSend,
+    voiceId: post.voiceId ?? "",
   };
 }
 
@@ -152,10 +207,25 @@ export function VideoPostCalendar() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<VideoPost | null>(null);
+  const [detail, setDetail] = useState<VideoPostDetail | null>(null);
   const [form, setForm] = useState<FormState>(() => emptyForm());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [voicesConfigured, setVoicesConfigured] = useState(false);
   const today = useMemo(() => new Date(), []);
+
+  useEffect(() => {
+    fetch("/api/voices")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setVoices(d.voices ?? []);
+          setVoicesConfigured(Boolean(d.configured));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const range = useMemo(() => {
     const from = startOfMonth(cursor);
@@ -203,12 +273,19 @@ export function VideoPostCalendar() {
     setEditing(post);
     setForm(formFromPost(post));
     setError("");
+    setDetail(null);
     setModalOpen(true);
+    // Carrega o detalhe do pipeline (roteiro, cenas, vídeo final)
+    fetch(`/api/video-posts/${post.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setDetail(d))
+      .catch(() => {});
   }
 
   function closeModal() {
     setModalOpen(false);
     setEditing(null);
+    setDetail(null);
     setError("");
   }
 
@@ -252,6 +329,7 @@ export function VideoPostCalendar() {
       platformTiktok: form.platformTiktok,
       platformKwai: form.platformKwai,
       autoSend: form.autoSend,
+      voiceId: form.voiceId.trim() || null,
       status: "scheduled" as const,
     };
 
@@ -447,15 +525,19 @@ export function VideoPostCalendar() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b px-5 py-3.5 [border-color:var(--border)]">
-              <h3 className="text-lg font-semibold">
-                {editing ? "Editar postagem" : "Nova postagem"}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold">
+                  {editing ? "Editar postagem" : "Nova postagem"}
+                </h3>
+                {editing && <StatusBadge status={editing.status} />}
+              </div>
               <button className="btn-ghost px-2" onClick={closeModal} aria-label="Fechar">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-4 px-5 py-4">
+              {editing && <PipelinePanel post={editing} detail={detail} />}
               <div>
                 <label className="label">Título</label>
                 <input
@@ -508,6 +590,36 @@ export function VideoPostCalendar() {
                   onChange={(e) => setForm((f) => ({ ...f, prompt: e.target.value }))}
                   placeholder="Descreva o roteiro ou o prompt para gerar o vídeo..."
                 />
+              </div>
+
+              <div>
+                <label className="label">Voz da narração (ElevenLabs)</label>
+                {voicesConfigured && voices.length > 0 ? (
+                  <select
+                    className="input"
+                    value={form.voiceId}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, voiceId: e.target.value }))
+                    }
+                  >
+                    <option value="">Padrão</option>
+                    {voices.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                        {v.language ? ` (${v.language})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="input font-mono"
+                    value={form.voiceId}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, voiceId: e.target.value }))
+                    }
+                    placeholder="Voice ID (vazio = voz padrão)"
+                  />
+                )}
               </div>
 
               <div>
@@ -610,6 +722,124 @@ export function VideoPostCalendar() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const info = STATUS_LABELS[status] ?? {
+    label: status,
+    className: "bg-black/10 dark:bg-white/10",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        info.className
+      )}
+    >
+      {IN_PROGRESS_STATUSES.has(status) && (
+        <Loader2 size={11} className="animate-spin" />
+      )}
+      {info.label}
+    </span>
+  );
+}
+
+function PipelinePanel({
+  post,
+  detail,
+}: {
+  post: VideoPost;
+  detail: VideoPostDetail | null;
+}) {
+  const [showScript, setShowScript] = useState(false);
+
+  const hasPipelineData =
+    detail?.script || detail?.finalVideoUrl || post.status === "failed";
+  if (!hasPipelineData) return null;
+
+  const script = detail?.script;
+  const finalVideoUrl = detail?.finalVideoUrl || post.finalVideoUrl;
+  const errorMsg = detail?.error || post.error;
+
+  return (
+    <div className="space-y-3 rounded-xl border p-3 [border-color:var(--border)]">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Film size={15} className="text-brand-600" /> Pipeline do vídeo
+      </p>
+
+      {post.status === "failed" && errorMsg && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          {errorMsg}
+        </p>
+      )}
+
+      {script && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
+            onClick={() => setShowScript((v) => !v)}
+          >
+            <FileText size={13} />
+            {showScript ? "Ocultar roteiro" : "Ver roteiro gerado"}
+          </button>
+          {showScript && (
+            <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg bg-black/5 p-3 text-xs dark:bg-white/5">
+              {script.content}
+            </pre>
+          )}
+
+          {script.prompts.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-medium muted">
+                Cenas ({script.prompts.length})
+              </p>
+              <ul className="max-h-40 space-y-1 overflow-y-auto">
+                {script.prompts.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex items-center gap-2 rounded-lg bg-black/[0.03] px-2 py-1.5 text-xs dark:bg-white/[0.04]"
+                  >
+                    <span className="shrink-0 font-mono muted">#{p.sequence}</span>
+                    <span className="min-w-0 flex-1 truncate" title={p.prompt}>
+                      {p.prompt}
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                        p.status === "done"
+                          ? "bg-emerald-500/15 text-emerald-600"
+                          : p.status === "failed"
+                            ? "bg-red-500/15 text-red-600"
+                            : "bg-amber-500/15 text-amber-600"
+                      )}
+                    >
+                      {p.status === "done"
+                        ? "pronta"
+                        : p.status === "failed"
+                          ? "falhou"
+                          : "gerando"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {finalVideoUrl && (
+        <a
+          href={finalVideoUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
+        >
+          <ExternalLink size={13} /> Ver vídeo final
+        </a>
       )}
     </div>
   );

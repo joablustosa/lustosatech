@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 import { uniqueSlug } from "@/lib/news";
 import {
   MEDIA_TYPES,
@@ -36,10 +36,12 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
   const { id } = await params;
-  const news = await prisma.news.findUnique({ where: { id } });
+  const news = await prisma.news.findFirst({
+    where: { id, tenantId: s.tenantId },
+  });
   if (!news) return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
   return NextResponse.json(news);
 }
@@ -48,9 +50,16 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
   const { id } = await params;
+
+  const existing = await prisma.news.findFirst({
+    where: { id, tenantId: s.tenantId },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
+  }
 
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -85,7 +94,7 @@ export async function PATCH(
   if (d.tags !== undefined) data.tags = d.tags;
 
   if (d.slug || d.title) {
-    data.slug = await uniqueSlug(d.slug || d.title!, id);
+    data.slug = await uniqueSlug(s.tenantId, d.slug || d.title!, id);
   }
 
   const news = await prisma.news.update({ where: { id }, data });
@@ -96,9 +105,14 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
   const { id } = await params;
-  await prisma.news.delete({ where: { id } });
+  const { count } = await prisma.news.deleteMany({
+    where: { id, tenantId: s.tenantId },
+  });
+  if (count === 0) {
+    return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }

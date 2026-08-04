@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api";
+import { requireSession } from "@/lib/api";
 
 const createSchema = z.object({
   startsAt: z.string(), // ISO
@@ -9,10 +9,11 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const slots = await prisma.availabilitySlot.findMany({
+    where: { tenantId: s.tenantId },
     orderBy: { startsAt: "asc" },
     include: { meeting: true },
   });
@@ -20,8 +21,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const s = await requireSession();
+  if (s instanceof NextResponse) return s;
 
   const parsed = createSchema.safeParse(await req.json());
   if (!parsed.success) {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   const endsAt = new Date(startsAt.getTime() + parsed.data.durationMin * 60000);
 
   const slot = await prisma.availabilitySlot.create({
-    data: { startsAt, endsAt },
+    data: { tenantId: s.tenantId, startsAt, endsAt },
   });
   return NextResponse.json(slot, { status: 201 });
 }
