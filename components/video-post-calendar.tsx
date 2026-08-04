@@ -50,6 +50,7 @@ interface Voice {
   id: string;
   name: string;
   language?: string;
+  premade?: boolean;
 }
 
 interface VideoPromptDetail {
@@ -991,6 +992,7 @@ export function VideoPostCalendar() {
                       <option key={v.id} value={v.id}>
                         {v.name}
                         {v.language ? ` (${v.language})` : ""}
+                        {v.premade === false ? " — requer plano pago" : ""}
                       </option>
                     ))}
                   </select>

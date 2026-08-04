@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 interface ElevenLabsVoice {
   voice_id: string;
   name: string;
+  category?: string;
   labels?: Record<string, string>;
 }
 
@@ -37,6 +38,9 @@ export async function GET() {
       id: v.voice_id,
       name: v.name,
       language: v.labels?.language,
+      // Vozes que não são premade (Voice Library etc.) exigem plano pago
+      // na API do ElevenLabs; o front avisa no seletor.
+      premade: v.category === "premade",
     }));
     return NextResponse.json({ configured: true, voices });
   } catch {
