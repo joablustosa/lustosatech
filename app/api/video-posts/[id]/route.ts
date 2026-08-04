@@ -14,6 +14,9 @@ const patchSchema = z.object({
   platformKwai: z.boolean().optional(),
   autoSend: z.boolean().optional(),
   voiceId: z.string().max(191).optional().nullable(),
+  format: z.enum(["vertical", "horizontal"]).optional(),
+  resolution: z.enum(["fullhd", "4k"]).optional(),
+  style: z.enum(["cinematic", "anime", "cartoon2d", "presentation"]).optional(),
   status: z.enum(["draft", "scheduled", "published", "failed"]).optional(),
 });
 
@@ -68,6 +71,9 @@ export async function PATCH(
     platformKwai?: boolean;
     autoSend?: boolean;
     voiceId?: string | null;
+    format?: string;
+    resolution?: string;
+    style?: string;
     status?: string;
   } = { ...rest };
 

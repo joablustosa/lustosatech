@@ -5,6 +5,7 @@ import { generateVideoClip } from "./veo";
 import { generateNarration } from "./elevenlabs";
 import { assembleVideo } from "./assemble";
 import { deliverVideo } from "./deliver";
+import { normalizeFormatOptions, targetDimensions } from "./format";
 
 const INTERVAL_MS = 60_000; // 1 em 1 minuto
 
@@ -73,6 +74,9 @@ async function processPost(postId: string): Promise<void> {
   });
   if (!post) return;
   const tenantId = post.tenantId;
+  // Formato/qualidade/estilo escolhidos no evento — viram prefixo automático
+  // dos prompts e configuram Veo (aspect ratio) e ffmpeg (dimensão final).
+  const formatOptions = normalizeFormatOptions(post);
 
   // 1) Roteiro (GPT) — pula se já existe
   let script = post.script;
@@ -82,6 +86,7 @@ async function processPost(postId: string): Promise<void> {
       title: post.title,
       prompt: post.prompt,
       accountName: post.accountName,
+      formatOptions,
     });
     script = await prisma.videoScript.create({
       data: { tenantId, videoPostId: post.id, content, status: "ready" },
@@ -96,7 +101,7 @@ async function processPost(postId: string): Promise<void> {
       data: { status: "script_ready" },
     });
     console.log(`[video-worker] dividindo roteiro em cenas: ${post.title}`);
-    const scenes = await splitIntoScenes(script.content);
+    const scenes = await splitIntoScenes(script.content, formatOptions);
     await prisma.videoPrompt.createMany({
       data: scenes.map((s) => ({
         tenantId,
@@ -125,7 +130,7 @@ async function processPost(postId: string): Promise<void> {
       console.log(
         `[video-worker] gerando clipe ${prompt.sequence}/${script.prompts.length}: ${post.title}`
       );
-      const clip = await generateVideoClip(prompt.prompt);
+      const clip = await generateVideoClip(prompt.prompt, formatOptions);
       videoUrl = await uploadToBlob(clip, "video/mp4", `scene-${prompt.sequence}.mp4`);
       await prisma.videoPrompt.update({
         where: { id: prompt.id },
@@ -164,7 +169,8 @@ async function processPost(postId: string): Promise<void> {
         sequence: p.sequence,
         videoUrl: p.videoUrl!,
         audioUrl: p.audioUrl,
-      }))
+      })),
+      targetDimensions(formatOptions)
     );
     finalVideoUrl = await uploadToBlob(finalVideo, "video/mp4", "final.mp4");
     await prisma.videoPost.update({

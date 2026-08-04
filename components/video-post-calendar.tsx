@@ -15,6 +15,14 @@ import {
   Film,
   FileText,
   ExternalLink,
+  Smartphone,
+  Monitor,
+  Clapperboard,
+  Sparkles,
+  Brush,
+  Presentation,
+  Wand2,
+  Zap,
 } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 
@@ -30,6 +38,9 @@ export interface VideoPost {
   platformKwai: boolean;
   autoSend: boolean;
   voiceId?: string | null;
+  format?: string;
+  resolution?: string;
+  style?: string;
   status: string;
   finalVideoUrl?: string | null;
   error?: string | null;
@@ -92,7 +103,59 @@ type FormState = {
   platformKwai: boolean;
   autoSend: boolean;
   voiceId: string;
+  format: string;
+  resolution: string;
+  style: string;
 };
+
+// Opções de formato/qualidade/estilo — escolhidas visualmente pelo usuário e
+// adicionadas automaticamente ao prompt pelo pipeline (não precisa repetir).
+const FORMAT_CHOICES = [
+  {
+    value: "vertical",
+    label: "Short / Vertical",
+    hint: "9:16 — Reels, TikTok, Shorts",
+    icon: <Smartphone size={18} />,
+  },
+  {
+    value: "horizontal",
+    label: "Horizontal",
+    hint: "16:9 — YouTube, TV",
+    icon: <Monitor size={18} />,
+  },
+];
+
+const RESOLUTION_CHOICES = [
+  { value: "fullhd", label: "Full HD", hint: "1080p (recomendado)" },
+  { value: "4k", label: "4K", hint: "Ultra HD, arquivo maior" },
+];
+
+const STYLE_CHOICES = [
+  {
+    value: "cinematic",
+    label: "Cinematográfico",
+    hint: "Filmagem realista de cinema",
+    icon: <Clapperboard size={18} />,
+  },
+  {
+    value: "anime",
+    label: "Anime",
+    hint: "Animação estilo anime",
+    icon: <Sparkles size={18} />,
+  },
+  {
+    value: "cartoon2d",
+    label: "Desenho 2D",
+    hint: "Cartoon divertido e leve",
+    icon: <Brush size={18} />,
+  },
+  {
+    value: "presentation",
+    label: "Apresentação",
+    hint: "Slides animados, educativo",
+    icon: <Presentation size={18} />,
+  },
+];
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -157,6 +220,9 @@ function emptyForm(day?: Date): FormState {
     platformKwai: false,
     autoSend: false,
     voiceId: "",
+    format: "vertical",
+    resolution: "fullhd",
+    style: "cinematic",
   };
 }
 
@@ -174,6 +240,9 @@ function formFromPost(post: VideoPost): FormState {
     platformKwai: post.platformKwai,
     autoSend: post.autoSend,
     voiceId: post.voiceId ?? "",
+    format: post.format ?? "vertical",
+    resolution: post.resolution ?? "fullhd",
+    style: post.style ?? "cinematic",
   };
 }
 
@@ -213,6 +282,9 @@ export function VideoPostCalendar() {
   const [error, setError] = useState("");
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesConfigured, setVoicesConfigured] = useState(false);
+  const [ideaLoading, setIdeaLoading] = useState(false);
+  const [ideaSuggestion, setIdeaSuggestion] = useState<string | null>(null);
+  const [sendingNow, setSendingNow] = useState(false);
   const today = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -266,6 +338,7 @@ export function VideoPostCalendar() {
     setEditing(null);
     setForm(emptyForm(day));
     setError("");
+    setIdeaSuggestion(null);
     setModalOpen(true);
   }
 
@@ -273,6 +346,7 @@ export function VideoPostCalendar() {
     setEditing(post);
     setForm(formFromPost(post));
     setError("");
+    setIdeaSuggestion(null);
     setDetail(null);
     setModalOpen(true);
     // Carrega o detalhe do pipeline (roteiro, cenas, vídeo final)
@@ -287,6 +361,63 @@ export function VideoPostCalendar() {
     setEditing(null);
     setDetail(null);
     setError("");
+    setIdeaSuggestion(null);
+  }
+
+  /** Gera (ou melhora) o prompt via agente de IA; o usuário confirma antes. */
+  async function generateIdea() {
+    if (!form.title.trim()) {
+      setError("Informe o título para gerar a ideia de prompt.");
+      return;
+    }
+    setError("");
+    setIdeaLoading(true);
+    try {
+      const res = await fetch("/api/video-posts/prompt-idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          prompt: form.prompt.trim() || undefined,
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(d.error || "Erro ao gerar a ideia de prompt.");
+        return;
+      }
+      setIdeaSuggestion(d.prompt);
+    } finally {
+      setIdeaLoading(false);
+    }
+  }
+
+  /** "Enviar agora": antecipa o agendamento e dispara o pipeline na hora. */
+  async function sendNow() {
+    if (!editing) return;
+    if (
+      !confirm(
+        "Enviar agora? O vídeo será gerado e enviado imediatamente, sem esperar o horário agendado."
+      )
+    )
+      return;
+    setSendingNow(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/video-posts/${editing.id}/send-now`, {
+        method: "POST",
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(d.error || "Erro ao enviar agora.");
+        return;
+      }
+      setEditing(d);
+      setForm(formFromPost(d));
+      load();
+    } finally {
+      setSendingNow(false);
+    }
   }
 
   async function save() {
@@ -330,6 +461,9 @@ export function VideoPostCalendar() {
       platformKwai: form.platformKwai,
       autoSend: form.autoSend,
       voiceId: form.voiceId.trim() || null,
+      format: form.format,
+      resolution: form.resolution,
+      style: form.style,
       status: "scheduled" as const,
     };
 
@@ -583,13 +717,122 @@ export function VideoPostCalendar() {
               </div>
 
               <div>
-                <label className="label">Prompt do roteiro</label>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className="label mb-0">Prompt do roteiro</label>
+                  <button
+                    type="button"
+                    className="btn-outline px-2.5 py-1 text-xs"
+                    onClick={generateIdea}
+                    disabled={ideaLoading || !form.title.trim()}
+                    title={
+                      form.title.trim()
+                        ? "A IA cria ou melhora o prompt a partir do título"
+                        : "Preencha o título primeiro"
+                    }
+                  >
+                    {ideaLoading ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Wand2 size={13} />
+                    )}
+                    {form.prompt.trim()
+                      ? "Melhorar meu prompt"
+                      : "Gerar ideia de prompt"}
+                  </button>
+                </div>
                 <textarea
                   className="input min-h-[120px]"
                   value={form.prompt}
                   onChange={(e) => setForm((f) => ({ ...f, prompt: e.target.value }))}
-                  placeholder="Descreva o roteiro ou o prompt para gerar o vídeo..."
+                  placeholder="Descreva o assunto do vídeo. Não precisa citar formato ou estilo — isso é escolhido abaixo."
                 />
+                {ideaSuggestion && (
+                  <div className="mt-2 space-y-2 rounded-xl border border-brand-600/40 bg-brand-600/5 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-600">
+                      <Wand2 size={13} /> Sugestão da IA
+                    </p>
+                    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs">
+                      {ideaSuggestion}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="btn-primary px-3 py-1.5 text-xs"
+                        onClick={() => {
+                          setForm((f) => ({ ...f, prompt: ideaSuggestion }));
+                          setIdeaSuggestion(null);
+                        }}
+                      >
+                        <Check size={13} /> Usar este prompt
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost px-3 py-1.5 text-xs"
+                        onClick={() => setIdeaSuggestion(null)}
+                      >
+                        Descartar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 rounded-xl border p-3 [border-color:var(--border)]">
+                <p className="text-sm font-semibold">Formato do vídeo</p>
+                <div>
+                  <label className="label">Orientação</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FORMAT_CHOICES.map((c) => (
+                      <ChoiceCard
+                        key={c.value}
+                        active={form.format === c.value}
+                        onSelect={() =>
+                          setForm((f) => ({ ...f, format: c.value }))
+                        }
+                        icon={c.icon}
+                        label={c.label}
+                        hint={c.hint}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Qualidade</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {RESOLUTION_CHOICES.map((c) => (
+                      <ChoiceCard
+                        key={c.value}
+                        active={form.resolution === c.value}
+                        onSelect={() =>
+                          setForm((f) => ({ ...f, resolution: c.value }))
+                        }
+                        label={c.label}
+                        hint={c.hint}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Estilo do vídeo</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STYLE_CHOICES.map((c) => (
+                      <ChoiceCard
+                        key={c.value}
+                        active={form.style === c.value}
+                        onSelect={() =>
+                          setForm((f) => ({ ...f, style: c.value }))
+                        }
+                        icon={c.icon}
+                        label={c.label}
+                        hint={c.hint}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs muted">
+                  Essas escolhas são adicionadas automaticamente ao prompt do
+                  vídeo — no campo acima, descreva apenas o conteúdo.
+                </p>
               </div>
 
               <div>
@@ -703,11 +946,30 @@ export function VideoPostCalendar() {
               {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-t px-5 py-3.5 [border-color:var(--border)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3.5 [border-color:var(--border)]">
               {editing ? (
-                <button className="btn-ghost text-red-500" onClick={remove}>
-                  <Trash2 size={16} /> Excluir
-                </button>
+                <div className="flex items-center gap-1">
+                  <button className="btn-ghost text-red-500" onClick={remove}>
+                    <Trash2 size={16} /> Excluir
+                  </button>
+                  <button
+                    className="btn-outline"
+                    onClick={sendNow}
+                    disabled={
+                      sendingNow || IN_PROGRESS_STATUSES.has(editing.status)
+                    }
+                    title="Gera e envia o vídeo imediatamente (bom para testar o fluxo)"
+                  >
+                    {sendingNow ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Zap size={16} />
+                    )}
+                    {IN_PROGRESS_STATUSES.has(editing.status)
+                      ? "Processando..."
+                      : "Enviar agora"}
+                  </button>
+                </div>
               ) : (
                 <span />
               )}
@@ -842,6 +1104,42 @@ function PipelinePanel({
         </a>
       )}
     </div>
+  );
+}
+
+function ChoiceCard({
+  active,
+  onSelect,
+  icon,
+  label,
+  hint,
+}: {
+  active: boolean;
+  onSelect: () => void;
+  icon?: ReactNode;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "flex items-start gap-2 rounded-xl border px-3 py-2.5 text-left transition",
+        active
+          ? "border-brand-600 bg-brand-600/10 text-brand-600"
+          : "[border-color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5"
+      )}
+      aria-pressed={active}
+    >
+      {icon && <span className="mt-0.5 shrink-0">{icon}</span>}
+      <span className="min-w-0">
+        <span className="block text-sm font-medium">{label}</span>
+        <span className={cn("block text-xs", active ? "text-brand-600/80" : "muted")}>
+          {hint}
+        </span>
+      </span>
+    </button>
   );
 }
 

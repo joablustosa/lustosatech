@@ -15,6 +15,9 @@ const createSchema = z
     platformKwai: z.boolean().optional(),
     autoSend: z.boolean().optional(),
     voiceId: z.string().max(191).optional().nullable(),
+    format: z.enum(["vertical", "horizontal"]).optional(),
+    resolution: z.enum(["fullhd", "4k"]).optional(),
+    style: z.enum(["cinematic", "anime", "cartoon2d", "presentation"]).optional(),
     status: z.enum(["draft", "scheduled", "published", "failed"]).optional(),
   })
   .refine(

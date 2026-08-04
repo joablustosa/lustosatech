@@ -1,4 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
+import {
+  buildStylePrefix,
+  veoAspectRatio,
+  type FormatOptions,
+} from "./format";
 
 const VEO_MODEL = process.env.VIDEO_VEO_MODEL || "veo-3.0-generate-001";
 const POLL_MS = 10_000;
@@ -10,10 +15,15 @@ function sleep(ms: number) {
 
 /**
  * Gera um clipe de vídeo (~8s) no Gemini (Veo) a partir do prompt visual da
- * cena. A operação é assíncrona: cria, faz polling até concluir e baixa o mp4.
+ * cena. O prefixo de formato/qualidade/estilo do post é adicionado
+ * automaticamente ao início do prompt e o aspect ratio vai na config da API.
+ * A operação é assíncrona: cria, faz polling até concluir e baixa o mp4.
  * A chave é sempre da empresa (env GEMINI_API_KEY).
  */
-export async function generateVideoClip(prompt: string): Promise<Buffer> {
+export async function generateVideoClip(
+  prompt: string,
+  formatOptions: FormatOptions
+): Promise<Buffer> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -25,7 +35,10 @@ export async function generateVideoClip(prompt: string): Promise<Buffer> {
 
   let operation = await ai.models.generateVideos({
     model: VEO_MODEL,
-    prompt,
+    prompt: `${buildStylePrefix(formatOptions)}\n\n${prompt}`,
+    config: {
+      aspectRatio: veoAspectRatio(formatOptions.format),
+    },
   });
 
   const started = Date.now();

@@ -14,6 +14,11 @@ export interface SceneAsset {
   audioUrl: string | null;
 }
 
+export interface TargetDimensions {
+  width: number;
+  height: number;
+}
+
 async function download(url: string, dest: string): Promise<void> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Falha ao baixar asset (${res.status}): ${url}`);
@@ -30,16 +35,25 @@ function run(cmd: ffmpeg.FfmpegCommand): Promise<void> {
 }
 
 /**
- * Monta o vídeo final: para cada cena, mixa o clipe com a narração; depois
- * concatena todas as cenas na ordem da sequência. Retorna o mp4 final.
+ * Monta o vídeo final: para cada cena, mixa o clipe com a narração e ajusta
+ * para a dimensão alvo (scale + pad, preservando proporção — é aqui que o 4K
+ * é feito por upscale, já que o Veo não gera 4K nativo); depois concatena
+ * todas as cenas na ordem da sequência. Retorna o mp4 final.
  */
-export async function assembleVideo(scenes: SceneAsset[]): Promise<Buffer> {
+export async function assembleVideo(
+  scenes: SceneAsset[],
+  target: TargetDimensions
+): Promise<Buffer> {
   if (scenes.length === 0) throw new Error("Nenhuma cena para montar.");
 
   const dir = await mkdtemp(path.join(tmpdir(), "video-pipeline-"));
   try {
     const ordered = [...scenes].sort((a, b) => a.sequence - b.sequence);
     const segmentPaths: string[] = [];
+
+    const scaleFilter =
+      `scale=${target.width}:${target.height}:force_original_aspect_ratio=decrease,` +
+      `pad=${target.width}:${target.height}:(ow-iw)/2:(oh-ih)/2`;
 
     for (const scene of ordered) {
       const clipPath = path.join(dir, `clip_${scene.sequence}.mp4`);
@@ -58,6 +72,7 @@ export async function assembleVideo(scenes: SceneAsset[]): Promise<Buffer> {
             .outputOptions([
               "-map 0:v:0",
               "-map 1:a:0",
+              `-vf ${scaleFilter}`,
               "-c:v libx264",
               "-preset veryfast",
               "-crf 23",
@@ -75,6 +90,7 @@ export async function assembleVideo(scenes: SceneAsset[]): Promise<Buffer> {
           ffmpeg()
             .input(clipPath)
             .outputOptions([
+              `-vf ${scaleFilter}`,
               "-c:v libx264",
               "-preset veryfast",
               "-crf 23",

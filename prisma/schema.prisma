@@ -173,6 +173,9 @@ model VideoPost {
   platformKwai      Boolean  @default(false)
   autoSend          Boolean  @default(false)
   voiceId           String? // voz do ElevenLabs para a narração deste vídeo (null = padrão)
+  format            String   @default("vertical") // vertical (Short 9:16) | horizontal (16:9)
+  resolution        String   @default("fullhd") // fullhd | 4k
+  style             String   @default("cinematic") // cinematic | anime | cartoon2d | presentation
   // Fluxo do pipeline: draft | scheduled | generating_script | script_ready |
   // generating_assets | assembling | sending | sent | failed
   status            String   @default("scheduled")

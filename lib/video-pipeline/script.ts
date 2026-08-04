@@ -1,4 +1,9 @@
 import { getOpenAI } from "../openai";
+import {
+  buildScriptHint,
+  buildStylePrefix,
+  type FormatOptions,
+} from "./format";
 
 export interface Scene {
   sequence: number;
@@ -16,6 +21,7 @@ export async function generateScript(opts: {
   title: string;
   prompt: string;
   accountName: string;
+  formatOptions: FormatOptions;
 }): Promise<string> {
   const client = await getOpenAI();
 
@@ -37,7 +43,8 @@ export async function generateScript(opts: {
         role: "user",
         content:
           `Título do vídeo: ${opts.title}\n` +
-          `Conta que vai publicar: ${opts.accountName}\n\n` +
+          `Conta que vai publicar: ${opts.accountName}\n` +
+          `Formato e estilo: ${buildScriptHint(opts.formatOptions)}\n\n` +
           `Instruções/prompt do roteiro:\n${opts.prompt}\n\n` +
           "Escreva o roteiro completo do vídeo.",
       },
@@ -53,7 +60,10 @@ export async function generateScript(opts: {
  * Divide o roteiro em cenas sequenciais, cada uma com um prompt visual
  * (para gerar o clipe no Gemini/Veo) e o texto de narração (ElevenLabs).
  */
-export async function splitIntoScenes(script: string): Promise<Scene[]> {
+export async function splitIntoScenes(
+  script: string,
+  formatOptions: FormatOptions
+): Promise<Scene[]> {
   const client = await getOpenAI();
 
   const resp = await client.chat.completions.create({
@@ -72,7 +82,9 @@ export async function splitIntoScenes(script: string): Promise<Scene[]> {
           "câmera, ambiente, ação, estilo; sem texto na tela), narration " +
           "(string: texto de narração da cena em português do Brasil)}. " +
           "Cada cena deve ter ~8 segundos de duração. Use no máximo 20 cenas, " +
-          "resumindo se necessário.",
+          "resumindo se necessário. " +
+          "Todos os prompts visuais devem seguir este estilo obrigatório: " +
+          buildStylePrefix(formatOptions),
       },
       {
         role: "user",
