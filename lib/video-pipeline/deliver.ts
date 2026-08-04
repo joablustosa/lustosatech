@@ -1,31 +1,85 @@
 import type { VideoPost, Tenant } from "@prisma/client";
 import { getSetting, type SettingKey } from "../settings";
 
-type PlatformCreds = { user: string | null; password: string | null };
+/**
+ * Campos de configuração enviados no webhook para cada plataforma, conforme a
+ * API oficial de publicação de cada uma. O nome no payload (à esquerda) é o
+ * que a API de destino recebe; a SettingKey (à direita) é onde o tenant
+ * configura na tela de Configurações.
+ */
+const PLATFORM_CONFIG_KEYS: Record<string, Record<string, SettingKey>> = {
+  // Meta Graph API — Content Publishing (Reels): POST /{ig-user-id}/media
+  instagram: {
+    user: "instagramUser",
+    password: "instagramPassword",
+    businessAccountId: "instagramBusinessAccountId",
+    accessToken: "instagramAccessToken",
+    facebookPageId: "instagramFacebookPageId",
+    appId: "instagramAppId",
+    appSecret: "instagramAppSecret",
+  },
+  // YouTube Data API v3 — videos.insert via OAuth2 (scope youtube.upload)
+  youtube: {
+    user: "youtubeUser",
+    password: "youtubePassword",
+    channelId: "youtubeChannelId",
+    clientId: "youtubeClientId",
+    clientSecret: "youtubeClientSecret",
+    refreshToken: "youtubeRefreshToken",
+    privacyStatus: "youtubePrivacyStatus",
+    categoryId: "youtubeCategoryId",
+  },
+  // TikTok Content Posting API — /v2/post/publish/video/init/ (video.publish)
+  tiktok: {
+    user: "tiktokUser",
+    password: "tiktokPassword",
+    clientKey: "tiktokClientKey",
+    clientSecret: "tiktokClientSecret",
+    accessToken: "tiktokAccessToken",
+    refreshToken: "tiktokRefreshToken",
+    openId: "tiktokOpenId",
+    privacyLevel: "tiktokPrivacyLevel",
+  },
+  // Kwai Open Platform — photo/start_upload + photo/publish (user_video_publish)
+  kwai: {
+    user: "kwaiUser",
+    password: "kwaiPassword",
+    appId: "kwaiAppId",
+    appSecret: "kwaiAppSecret",
+    accessToken: "kwaiAccessToken",
+    refreshToken: "kwaiRefreshToken",
+    openId: "kwaiOpenId",
+  },
+};
+
+type PlatformCreds = Record<string, string | null>;
 
 /**
- * Monta o bloco de credenciais das redes sociais marcadas no post, lidas das
- * Configurações do tenant, para a API de destino conseguir publicar.
+ * Monta o bloco de credenciais/configurações das redes sociais marcadas no
+ * post, lidas das Configurações do tenant, para a API de destino publicar.
  */
 async function collectCredentials(
   post: VideoPost,
   tenantId: string
 ): Promise<Record<string, PlatformCreds>> {
-  const platforms: Array<[string, boolean, SettingKey, SettingKey]> = [
-    ["instagram", post.platformInstagram, "instagramUser", "instagramPassword"],
-    ["youtube", post.platformYoutube, "youtubeUser", "youtubePassword"],
-    ["tiktok", post.platformTiktok, "tiktokUser", "tiktokPassword"],
-    ["kwai", post.platformKwai, "kwaiUser", "kwaiPassword"],
+  const enabled: Array<[string, boolean]> = [
+    ["instagram", post.platformInstagram],
+    ["youtube", post.platformYoutube],
+    ["tiktok", post.platformTiktok],
+    ["kwai", post.platformKwai],
   ];
 
   const credentials: Record<string, PlatformCreds> = {};
-  for (const [name, enabled, userKey, passKey] of platforms) {
-    if (!enabled) continue;
-    const [user, password] = await Promise.all([
-      getSetting(userKey, tenantId),
-      getSetting(passKey, tenantId),
-    ]);
-    credentials[name] = { user: user || null, password: password || null };
+  for (const [name, isOn] of enabled) {
+    if (!isOn) continue;
+    const fields = PLATFORM_CONFIG_KEYS[name];
+    const entries = Object.entries(fields);
+    const values = await Promise.all(
+      entries.map(([, key]) => getSetting(key, tenantId))
+    );
+    credentials[name] = Object.fromEntries(
+      entries.map(([field], i) => [field, values[i] || null])
+    );
   }
   return credentials;
 }

@@ -19,14 +19,40 @@ const ALLOWED_KEYS = [
   "videoWebhookUrl",
   // Contas de redes sociais do tenant (dados do cliente, enviados no webhook
   // para a API de publicação). As chaves das IAs NÃO ficam aqui: são env.
+  // Instagram — Meta Graph API
   "instagramUser",
   "instagramPassword",
+  "instagramBusinessAccountId",
+  "instagramAccessToken",
+  "instagramFacebookPageId",
+  "instagramAppId",
+  "instagramAppSecret",
+  // YouTube — Data API v3 (OAuth2)
   "youtubeUser",
   "youtubePassword",
+  "youtubeChannelId",
+  "youtubeClientId",
+  "youtubeClientSecret",
+  "youtubeRefreshToken",
+  "youtubePrivacyStatus",
+  "youtubeCategoryId",
+  // TikTok — Content Posting API
   "tiktokUser",
   "tiktokPassword",
+  "tiktokClientKey",
+  "tiktokClientSecret",
+  "tiktokAccessToken",
+  "tiktokRefreshToken",
+  "tiktokOpenId",
+  "tiktokPrivacyLevel",
+  // Kwai — Open Platform
   "kwaiUser",
   "kwaiPassword",
+  "kwaiAppId",
+  "kwaiAppSecret",
+  "kwaiAccessToken",
+  "kwaiRefreshToken",
+  "kwaiOpenId",
 ];
 
 export async function GET() {

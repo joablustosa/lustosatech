@@ -22,10 +22,24 @@ export const SECRET_KEYS = new Set([
   "whatsappAccessToken",
   "whatsappVerifyToken",
   "newsApiKey",
+  // Instagram (Meta Graph API)
   "instagramPassword",
+  "instagramAccessToken",
+  "instagramAppSecret",
+  // YouTube (Data API v3 / OAuth2)
   "youtubePassword",
+  "youtubeClientSecret",
+  "youtubeRefreshToken",
+  // TikTok (Content Posting API)
   "tiktokPassword",
+  "tiktokClientSecret",
+  "tiktokAccessToken",
+  "tiktokRefreshToken",
+  // Kwai (Open Platform)
   "kwaiPassword",
+  "kwaiAppSecret",
+  "kwaiAccessToken",
+  "kwaiRefreshToken",
 ]);
 
 export type SettingKey =
@@ -38,14 +52,40 @@ export type SettingKey =
   | "bookingBaseUrl"
   | "newsApiKey"
   | "videoWebhookUrl"
+  // Instagram — Meta Graph API (Content Publishing / Reels)
   | "instagramUser"
   | "instagramPassword"
+  | "instagramBusinessAccountId" // IG User ID (conta profissional)
+  | "instagramAccessToken" // token de longa duração (instagram_content_publish)
+  | "instagramFacebookPageId" // página do Facebook vinculada
+  | "instagramAppId" // app da Meta (para renovar o token)
+  | "instagramAppSecret"
+  // YouTube — Data API v3 (videos.insert via OAuth2)
   | "youtubeUser"
   | "youtubePassword"
+  | "youtubeChannelId"
+  | "youtubeClientId" // OAuth2 client (Google Cloud Console)
+  | "youtubeClientSecret"
+  | "youtubeRefreshToken" // obtido com access_type=offline + scope youtube.upload
+  | "youtubePrivacyStatus" // public | unlisted | private
+  | "youtubeCategoryId" // categoria padrão dos uploads (ex.: 22 = People & Blogs)
+  // TikTok — Content Posting API (Direct Post)
   | "tiktokUser"
   | "tiktokPassword"
+  | "tiktokClientKey" // app no TikTok for Developers
+  | "tiktokClientSecret"
+  | "tiktokAccessToken" // token do usuário com scope video.publish
+  | "tiktokRefreshToken"
+  | "tiktokOpenId" // open_id do usuário autorizado
+  | "tiktokPrivacyLevel" // PUBLIC_TO_EVERYONE | MUTUAL_FOLLOW_FRIENDS | FOLLOWER_OF_CREATOR | SELF_ONLY
+  // Kwai — Open Platform (user_video_publish)
   | "kwaiUser"
-  | "kwaiPassword";
+  | "kwaiPassword"
+  | "kwaiAppId"
+  | "kwaiAppSecret"
+  | "kwaiAccessToken"
+  | "kwaiRefreshToken"
+  | "kwaiOpenId";
 
 export async function getAllSettings(
   tenantId: string = DEFAULT_TENANT_ID
