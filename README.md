@@ -80,6 +80,8 @@ Segredos na tela de Configurações são mascarados (`SECRET_KEYS` em
 | `VideoPost` | Evento do calendário de vídeo: título, prompt, conta, plataformas, `autoSend`, `voiceId` (ElevenLabs por vídeo), `format` (vertical/horizontal), `resolution` (fullhd/4k), `style` (cinematic/anime/cartoon2d/presentation), `status`, `finalVideoUrl`, `error` |
 | `VideoScript` | Roteiro completo gerado por IA (LONGTEXT), 1:1 com `VideoPost` |
 | `VideoPrompt` | Cenas do roteiro: `sequence`, `prompt` visual (inglês, p/ Veo), `narration` (PT-BR, p/ ElevenLabs), URLs dos assets no Blob, status por cena |
+| `MonthlyGoal` | Meta mensal por tenant: quantidade de projetos e faturamento (`year`+`month`) |
+| `Project` | Projeto cadastrado (valor, status, `referenceDate`) que alimenta o progresso da meta do mês |
 
 Status do `VideoPost` (pipeline): `draft | scheduled | generating_script |
 script_ready | generating_assets | assembling | sending | sent | failed`.
@@ -183,6 +185,7 @@ Extras do calendário (`components/video-post-calendar.tsx`, página
 | `/admin/login`, `/admin/register` | público | Login e registro de tenant |
 | `/admin` | protegido | Dashboard (contadores + avisos de configuração) |
 | `/admin/conversations`, `/admin/conversations/[id]` | protegido | Conversas + testador da IA + relatório |
+| `/admin/projects` | protegido | Projetos e metas mensais (qtd. + faturamento) |
 | `/admin/documents` | protegido | Base de conhecimento `.md` |
 | `/admin/availability` | protegido | Horários disponíveis |
 | `/admin/news`, `/admin/news/new`, `/admin/news/[id]/edit` | protegido | CRUD de notícias |

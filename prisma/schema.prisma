@@ -24,6 +24,8 @@ model Tenant {
   videoPosts        VideoPost[]
   videoScripts      VideoScript[]
   videoPrompts      VideoPrompt[]
+  monthlyGoals      MonthlyGoal[]
+  projects          Project[]
 }
 
 model AdminUser {
@@ -228,4 +230,39 @@ model VideoPrompt {
 
   @@unique([scriptId, sequence])
   @@index([tenantId])
+}
+
+/// Meta mensal de projetos (quantidade e faturamento) por tenant
+model MonthlyGoal {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  year           Int
+  month          Int // 1–12
+  targetProjects Int      @default(0)
+  targetRevenue  Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, year, month])
+  @@index([tenantId])
+}
+
+/// Projeto cadastrado que conta para a meta do mês de referência
+model Project {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  clientName    String?
+  value         Decimal  @default(0) @db.Decimal(14, 2)
+  status        String   @default("ativo") // ativo | concluido | cancelado
+  referenceDate DateTime @default(now()) // mês em que o projeto conta na meta
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, referenceDate])
+  @@index([tenantId, status])
 }

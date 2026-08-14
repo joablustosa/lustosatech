@@ -32,3 +32,10 @@ export function formatTime(date: Date | string): string {
     minute: "2-digit",
   }).format(d);
 }
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value || 0);
+}

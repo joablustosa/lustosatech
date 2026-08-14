@@ -15,12 +15,14 @@ import {
   Moon,
   Sun,
   Newspaper,
+  FolderKanban,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/projects", label: "Projetos", icon: FolderKanban },
   { href: "/admin/news", label: "Notícias", icon: Newspaper },
   { href: "/admin/video-posts", label: "Postagens", icon: CalendarDays },
   { href: "/admin/conversations", label: "Conversas", icon: MessagesSquare },
