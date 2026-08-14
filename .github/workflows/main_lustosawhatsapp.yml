@@ -1,15 +1,5 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-#
-# Auth: OIDC (azure/login) — Basic Auth / publish profile desabilitado no App Service.
-#
-# Apos mover o repo para a org lustosa-tech, atualize a Federated Credential no
-# Entra ID (App Registration do deploy) com Subject:
-#   repo:lustosa-tech/lustosatech:ref:refs/heads/main
-# Issuer:
-#   https://token.actions.githubusercontent.com
-# Audience:
-#   api://AzureADTokenExchange
 
 name: Build and deploy Node.js app to Azure Web App - LustosaWhatsapp
 
@@ -23,62 +13,53 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: "22"
-          cache: npm
+          node-version: '22.x'
 
-      - name: npm install and build
+      - name: npm install, build, and test
         run: |
-          npm ci
-          npx prisma generate
-          npm run build
-        env:
-          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
-          AUTH_SECRET: build-time-placeholder-secret
-          NEXT_PUBLIC_BASE_URL: https://lustosawhatsapp-cfaedzbtg9fubadx.canadacentral-01.azurewebsites.net
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          include-hidden-files: true
-          path: |
-            .
-            !node_modules
-            !.git
-            !.next/cache
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C6A517EE4745492EA3D312CDD09DB483 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BE51FF67A7B44EC5A4777FCF6333A4FE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1FC778E4836746C3A7B15A976D72E677 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E8454F58F8E847FB9EA8D4D2844DFDEC }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3ABE03ED5CFF49B5B8CD2BB1D4B5C331 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CDEF48E147CE427898B64D3B3B08A4F0 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: LustosaWhatsapp
-          slot-name: Production
+          app-name: 'LustosaWhatsapp'
+          slot-name: 'Production'
           package: .
+          
