@@ -11,7 +11,6 @@ import {
 import { formatDate, formatTime } from "@/lib/utils";
 
 interface Slot {
-  id: string;
   startsAt: string;
   endsAt: string;
 }
@@ -71,7 +70,7 @@ export default function AgendarPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        slotId: selected.id,
+        startsAt: selected.startsAt,
         clientName: name,
         clientEmail: email,
         clientPhone: phone,
@@ -141,10 +140,10 @@ export default function AgendarPage() {
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {daySlots.map((s) => {
-                    const active = selected?.id === s.id;
+                    const active = selected?.startsAt === s.startsAt;
                     return (
                       <button
-                        key={s.id}
+                        key={s.startsAt}
                         onClick={() => setSelected(s)}
                         className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                           active
