@@ -27,7 +27,7 @@ const nav = [
   { href: "/admin/video-posts", label: "Postagens", icon: CalendarDays },
   { href: "/admin/conversations", label: "Conversas", icon: MessagesSquare },
   { href: "/admin/documents", label: "Documentos", icon: FileText },
-  { href: "/admin/availability", label: "Horários", icon: CalendarClock },
+  { href: "/admin/availability", label: "Agendamentos", icon: CalendarClock },
   { href: "/admin/users", label: "Usuários", icon: Users },
   { href: "/admin/settings", label: "Configurações", icon: Settings },
 ];

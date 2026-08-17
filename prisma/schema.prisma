@@ -100,6 +100,7 @@ model AvailabilitySlot {
   createdAt DateTime @default(now())
   meeting   Meeting?
 
+  @@unique([tenantId, startsAt])
   @@index([tenantId])
 }
 
